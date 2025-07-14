@@ -1,0 +1,10 @@
+streamlit
+librosa
+matplotlib
+scikit-learn
+cohere
+python-dotenv
+plotly
+numpy
+pydub
+
