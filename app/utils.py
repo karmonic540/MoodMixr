@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cohere
 import os
+import time
 import streamlit as st
 
 # Unified secret access: secrets.toml > fallback to env
@@ -95,4 +96,39 @@ def generate_plotly_energy_curve(tracks):
                            font=dict(color=colors[i], size=12))
     fig.update_layout(title="🎚️ DJ Set Energy Flow", template="plotly_dark", height=400,
                       xaxis=dict(showticklabels=False), yaxis_title="Energy")
+    return fig
+
+# Generate waveform
+def generate_emotion_waveform(y, sr, mood="neutral", track_name=""):
+    import matplotlib.pyplot as plt
+    import librosa.display
+
+    mood_color_map = {
+        "happy": "gold",
+        "calm": "skyblue",
+        "dark": "purple",
+        "energetic": "crimson",
+        "neutral": "#00FF99"
+    }
+
+    # Pick color based on mood keyword
+    mood_key = next((k for k in mood_color_map if k in mood.lower()), "neutral")
+    color = mood_color_map[mood_key]
+
+    fig, ax = plt.subplots(figsize=(10, 3), facecolor='#0D0D0D')
+    ax.set_facecolor('#0D0D0D')
+
+    librosa.display.waveshow(y, sr=sr, ax=ax, color=color, alpha=0.9)
+    ax.set_title(f"🎧 Audio Waveform (Emotion-Based)", color='white', fontsize=12, loc='left')
+    ax.text(1.0, 1.0, f"🎵 {track_name}", ha='right', va='top',
+            transform=ax.transAxes, fontsize=10, color="#AAAAAA")
+    ax.text(0, 1.0, f"🎨 Emotion Color: {color}", ha='left', va='top',
+            transform=ax.transAxes, fontsize=9, color=color)
+
+    ax.set_xticks([])
+    ax.set_yticks([])
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+
+    plt.tight_layout()
     return fig
