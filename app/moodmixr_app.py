@@ -1,5 +1,6 @@
 import streamlit as st
 import librosa
+import pandas as pd
 import os
 import numpy as np
 import streamlit.components.v1 as components
@@ -10,7 +11,8 @@ from utils import (
     generate_plotly_energy_curve,
     get_bpm_animation_speed,
     get_mood_color,
-    suggest_best_transitions
+    suggest_best_transitions,
+    classify_set_role
 )
 
 # 🎨 Global Style
@@ -102,11 +104,16 @@ with tab1:
         '''
         components.html(eq_html, height=100)
 
-# ========== TAB 2 ==========
 with tab2:
     st.markdown("### 🎚️ DJ Set Optimizer")
 
-    uploaded_files = st.file_uploader("Upload multiple files", type=["mp3", "wav"], accept_multiple_files=True)
+    uploaded_files = st.file_uploader(
+        "Upload multiple files",
+        type=["mp3", "wav"],
+        accept_multiple_files=True,
+        key="multi_file_uploader"
+    )
+
     if uploaded_files:
         track_data = []
 
@@ -128,15 +135,61 @@ with tab2:
                 "energy": energy
             })
 
+        # Sort and classify tracks
         sorted_tracks = sorted(track_data, key=lambda x: x["energy"])
+        for track in sorted_tracks:
+            track["role"] = classify_set_role(track["bpm"], track["energy"], track["mood"])
 
+        # Emoji + Color Maps
+        role_emojis = {
+            "🎬 Opener": "🎬",
+            "🎧 Mid-Set": "🎧",
+            "🔥 Peak": "🔥",
+            "🎉 Closer": "🎉",
+            "🎚️ Support": "🎚️"
+        }
+        role_colors = {
+            "🎬 Opener": "#00CCCC",
+            "🎧 Mid-Set": "#FFCC00",
+            "🔥 Peak": "#FF3366",
+            "🎉 Closer": "#66FF99",
+            "🎚️ Support": "#CCCCFF"
+        }
+
+        # CSS
+        st.markdown("""<style> ...your moodmixr-card CSS here... </style>""", unsafe_allow_html=True)
+
+        # 🔁 Display Cards
         for i, track in enumerate(sorted_tracks):
-            st.markdown(f"**{i+1}.** `{track['filename']}` | BPM: {track['bpm']} | Energy: {track['energy']:.2f} | Mood: {track['mood']}")
+            short_mood = track['mood'].split(".")[0][:100] + "..."
+            role = track['role']
+            role_emoji = role_emojis.get(role, "🎚️")
+            role_color = role_colors.get(role, "#FFFFFF")
 
-        plotly_chart = generate_plotly_energy_curve(sorted_tracks)
-        st.plotly_chart(plotly_chart, use_container_width=True)
+            st.markdown(f"""
+            <div class="moodmixr-card">
+                <div class="moodmixr-card-content">
+                    <div class="moodmixr-role" style="color: {role_color}; font-size: 1.1rem;">{role_emoji} {role}</div>
+                    <div class="moodmixr-card-title">{track['filename']}</div>
+                    <div class="moodmixr-card-details">
+                        <span class="moodmixr-badge">BPM: {track['bpm']}</span>
+                        <span class="moodmixr-badge">Energy: {track['energy']:.2f}</span><br><br>
+                        <b>Mood:</b> <i>{short_mood}</i>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
-        st.markdown("### 🔀 AI-Suggested Transitions")
-        transitions = suggest_best_transitions(sorted_tracks)
-        for t in transitions:
-            st.markdown(f"🎧 Best next track after **`{t['from']}`** → **`{t['to']}`**  \n_Reason: {t['reason']}_")
+        # 📥 Download CSV
+        df_export = pd.DataFrame(sorted_tracks)
+        df_export = df_export[["filename", "bpm", "key", "mood", "energy"]]
+        df_export.columns = ["Track", "BPM", "Key", "Mood", "Energy"]
+
+        csv = df_export.to_csv(index=False).encode("utf-8")
+
+        st.download_button(
+            label="📥 Download Set Report (CSV)",
+            data=csv,
+            file_name="moodmixr_dj_set_report.csv",
+            mime="text/csv"
+        )

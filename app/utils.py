@@ -1,6 +1,7 @@
 
 import librosa
 import librosa.display
+import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import cohere
@@ -152,3 +153,20 @@ def suggest_best_transitions(track_data):
         })
 
     return transitions
+def classify_set_role(bpm, energy, mood):
+    """
+    Classifies a track into DJ set position based on BPM, energy, and mood.
+
+    Returns one of:
+    🎬 Opener | 🎧 Mid-Set | 🔥 Peak | 🎉 Closer | 🎚️ Support
+    """
+    if bpm < 90 or "chill" in mood.lower():
+        return "🎬 Opener"
+    elif energy > 60 and bpm >= 120:
+        return "🔥 Peak"
+    elif 90 <= bpm < 120 and energy < 60:
+        return "🎧 Mid-Set"
+    elif energy < 40:
+        return "🎉 Closer"
+    else:
+        return "🎚️ Support"
