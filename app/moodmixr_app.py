@@ -72,7 +72,8 @@ h1, h2, h3, h4 { color: #FF00FF; }
 st.markdown("<h1 style='text-align: center; color: #FF00FF;'>🎧 MoodMixr</h1>", unsafe_allow_html=True)
 st.caption("AI-powered DJ Insight Tool for Pros")
 
-tab1, tab2, tab3 = st.tabs(["🎯 Track Analyzer", "🎚️ DJ Set Optimizer", "🎛️ Performance Mode"])
+tab1, tab2, tab3, tab4 = st.tabs(["Track Analyzer", "DJ Set Optimizer", "Performance Mode", "📚 Library Insight"])
+
 
 
 # === TAB 1 ===
@@ -325,5 +326,47 @@ with tab3:
                         f"<b style='color:{color};'>💡 Set Tip:</b><br><span style='color:white;'>{set_tip}</span></div>", unsafe_allow_html=True)
         except Exception as e:
             st.warning("No AI tip generated. Check API.")
+
+# === TAB 4: 📚 Library Insight ===
+with tab4:
+    st.markdown("### 📚 Library Insight (Bulk Track Analyzer)")
+    files = st.file_uploader("Upload multiple tracks (.mp3/.wav)", type=["mp3", "wav"], accept_multiple_files=True)
+
+    if files:
+        st.info(f"🔍 Analyzing {len(files)} tracks...")
+
+        all_tracks = []
+        for f in files:
+            temp_path = f"app/audio/{f.name}"
+            with open(temp_path, "wb") as out:
+                out.write(f.read())
+
+            try:
+                y, sr = librosa.load(temp_path, sr=None)
+                bpm, key = detect_bpm_key(y, sr)
+                mood = analyze_mood(temp_path)
+                energy = calculate_energy_profile(y)
+                all_tracks.append({
+                    "Track": f.name,
+                    "BPM": bpm,
+                    "Key": key,
+                    "Mood": mood,
+                    "Energy": round(energy, 3)
+                })
+            except Exception as e:
+                all_tracks.append({
+                    "Track": f.name,
+                    "BPM": "❌",
+                    "Key": "❌",
+                    "Mood": f"Error: {e}",
+                    "Energy": "❌"
+                })
+
+        df = pd.DataFrame(all_tracks)
+        st.dataframe(df, use_container_width=True)
+
+        st.download_button("📥 Download CSV", df.to_csv(index=False).encode(), "library_analysis.csv", "text/csv")
+
+        st.success("✅ All tracks analyzed. You can now sort, download, or use this data for set prep.")
 
 
