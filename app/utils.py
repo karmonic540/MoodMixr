@@ -1,15 +1,22 @@
 # === utils.py ===
-import librosa
-import librosa.display
-import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
-import cohere
 import os
 import time
+import json
+import base64
+import requests
+import librosa
+import librosa.display
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 import streamlit as st
+import cohere
+import spotipy
+from spotipy import Spotify
+from spotipy.oauth2 import SpotifyClientCredentials
 
-# Unified secret access: secrets.toml > fallback to env
+# Unified secret access
 def get_secret(key):
     return st.secrets.get(key) or os.getenv(key)
 
@@ -34,7 +41,7 @@ def analyze_mood(audio_path):
 def calculate_energy_profile(y):
     return float(np.mean(librosa.feature.rms(y=y)[0])) * 1000
 
-# Mood Color
+# Mood Color Map
 def get_mood_color(mood):
     mood = mood.lower()
     return {
@@ -46,7 +53,7 @@ def get_mood_color(mood):
 def get_bpm_animation_speed(bpm):
     return "1.2s" if bpm < 80 else "1s" if bpm < 100 else "0.8s" if bpm < 120 else "0.6s"
 
-# Role Classifier
+# Classify DJ Set Role
 def classify_set_role(bpm, energy, mood):
     mood = mood.lower()
     if bpm < 90 or "chill" in mood:
@@ -59,13 +66,13 @@ def classify_set_role(bpm, energy, mood):
         return "🎉 Closer"
     return "🎚️ Support"
 
-# Transition Suggestions
+# Suggest DJ Transitions
 def suggest_best_transitions(track_data):
     def score(a, b):
-        score = 100 - abs(a['bpm'] - b['bpm'])
-        if a['key'] == b['key']: score += 15
-        if a['mood'].split()[0].lower() in b['mood'].lower(): score += 10
-        return score
+        s = 100 - abs(a['bpm'] - b['bpm'])
+        if a['key'] == b['key']: s += 15
+        if a['mood'].split()[0].lower() in b['mood'].lower(): s += 10
+        return s
 
     results = []
     for i, track in enumerate(track_data):
@@ -74,13 +81,12 @@ def suggest_best_transitions(track_data):
             key=lambda b: score(track, b)
         )
         reason = f"Close BPM ({track['bpm']}→{best['bpm']}), "
-        if track['key'] == best['key']: reason += "Key match ✅, "
+        reason += "Key match ✅, " if track['key'] == best['key'] else ""
         reason += "Similar mood 🎭" if track['mood'].split()[0].lower() in best['mood'].lower() else "Mood contrast"
         results.append({"from": track['filename'], "to": best['filename'], "score": score(track, best), "reason": reason})
     return results
 
 # Plotly Energy Curve
-import plotly.graph_objects as go
 def generate_plotly_energy_curve(tracks):
     energies = [t["energy"] for t in tracks]
     labels = [t["filename"] for t in tracks]
@@ -98,11 +104,8 @@ def generate_plotly_energy_curve(tracks):
                       xaxis=dict(showticklabels=False), yaxis_title="Energy")
     return fig
 
-# Generate waveform
+# Waveform Generation
 def generate_emotion_waveform(y, sr, mood="neutral", track_name=""):
-    import matplotlib.pyplot as plt
-    import librosa.display
-
     mood_color_map = {
         "happy": "gold",
         "calm": "skyblue",
@@ -110,25 +113,97 @@ def generate_emotion_waveform(y, sr, mood="neutral", track_name=""):
         "energetic": "crimson",
         "neutral": "#00FF99"
     }
-
-    # Pick color based on mood keyword
     mood_key = next((k for k in mood_color_map if k in mood.lower()), "neutral")
     color = mood_color_map[mood_key]
 
     fig, ax = plt.subplots(figsize=(10, 3), facecolor='#0D0D0D')
     ax.set_facecolor('#0D0D0D')
-
     librosa.display.waveshow(y, sr=sr, ax=ax, color=color, alpha=0.9)
-    ax.set_title(f"🎧 Audio Waveform (Emotion-Based)", color='white', fontsize=12, loc='left')
+    ax.set_title("🎧 Audio Waveform (Emotion-Based)", color='white', fontsize=12, loc='left')
     ax.text(1.0, 1.0, f"🎵 {track_name}", ha='right', va='top',
             transform=ax.transAxes, fontsize=10, color="#AAAAAA")
     ax.text(0, 1.0, f"🎨 Emotion Color: {color}", ha='left', va='top',
             transform=ax.transAxes, fontsize=9, color=color)
-
     ax.set_xticks([])
     ax.set_yticks([])
     for spine in ax.spines.values():
         spine.set_visible(False)
-
     plt.tight_layout()
     return fig
+
+# === SPOTIFY ===
+def get_spotify_token(client_id, client_secret):
+    auth_str = f"{client_id}:{client_secret}"
+    b64_auth = base64.b64encode(auth_str.encode()).decode()
+    headers = {
+        "Authorization": f"Basic {b64_auth}",
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+    data = {"grant_type": "client_credentials"}
+    try:
+        res = requests.post("https://accounts.spotify.com/api/token", headers=headers, data=data)
+        res.raise_for_status()
+        return res.json()["access_token"]
+    except Exception as e:
+        st.error(f"🔒 Spotify Token Error: {e}")
+        return None
+
+def search_spotify_tracks(query, token, limit=5):
+    sp = Spotify(auth=token)
+    return sp.search(q=query, type='track', limit=limit)['tracks']['items']
+
+def get_spotify_audio_features(track_id, token):
+    url = f"https://api.spotify.com/v1/audio-features/{track_id}"
+    headers = {"Authorization": f"Bearer {token}"}
+    try:
+        res = requests.get(url, headers=headers)
+        res.raise_for_status()
+        return res.json()
+    except requests.exceptions.HTTPError as e:
+        st.error(f"❌ Error fetching audio features: {e.response.status_code} - {e.response.text}")
+        return {}
+
+# === YOUTUBE ===
+def search_youtube_videos(query, max_results=5, api_key=None):
+    if not api_key:
+        raise ValueError("YouTube API key is required.")
+
+    url = "https://www.googleapis.com/youtube/v3/search"
+    params = {
+        "part": "snippet",
+        "q": query,
+        "type": "video",
+        "videoEmbeddable": "true",
+        "maxResults": max_results,
+        "key": api_key
+    }
+
+    response = requests.get(url, params=params)
+    response.raise_for_status()
+    items = response.json().get("items", [])
+    return [{
+        "videoId": i["id"]["videoId"],
+        "title": i["snippet"]["title"],
+        "channel": i["snippet"]["channelTitle"],
+        "thumbnail": i["snippet"]["thumbnails"]["high"]["url"]
+    } for i in items]
+
+def get_youtube_video_details(video_id, api_key=None):
+    if not api_key:
+        raise ValueError("YouTube API key is required.")
+
+    url = f"https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id={video_id}&key={api_key}"
+    response = requests.get(url)
+    response.raise_for_status()
+    data = response.json()
+
+    if "items" in data and data["items"]:
+        item = data["items"][0]
+        return {
+            "title": item["snippet"].get("title"),
+            "channel": item["snippet"].get("channelTitle"),
+            "thumbnail": item["snippet"]["thumbnails"]["high"]["url"],
+            "published": item["snippet"].get("publishedAt"),
+            "duration": item["contentDetails"]["duration"]
+        }
+    return None
