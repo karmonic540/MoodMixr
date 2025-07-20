@@ -1,10 +1,11 @@
 streamlit
 librosa
 matplotlib
-scikit-learn
-cohere
-python-dotenv
-plotly
 numpy
-pydub
-
+pandas
+mutagen
+soundfile
+cohere
+requests
+plotly
+pytube

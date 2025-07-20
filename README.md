@@ -1,30 +1,55 @@
-# # 🎧 MoodMixr
-<p align="center">
-  <img src="app/assets/logo.png" alt="MoodMixr Logo" width="180"/>
-</p>
+# 🎧 MoodMixr
 
-**MoodMixr** is an AI-powered DJ Insight Tool that helps music producers and DJs:
-- Analyze BPM, key, mood, and waveform
-- Optimize DJ set order using energy curves
-- Visualize waveform and EQ animations
-- Use AI to tag music and generate transitions
+**MoodMixr** is an AI-powered DJ Insight Engine that helps DJs, producers, and playlist curators make smarter decisions with their music sets. Built with modular AI agents, it analyzes track audio, emotion, structure, and energy — and turns raw audio into set-ready insights.
 
-Built with:
-- `Streamlit` for UI
-- `librosa` for audio processing
-- `Cohere` for mood classification
-- `Plotly` for interactive charts
+> 🔁 Think of it as your DJ Copilot — combining signal processing + large language models for live or studio workflows.
 
+---
 
-<img width="810" height="922" alt="image" src="https://github.com/user-attachments/assets/5443e014-e2f2-48d0-acb8-3543728e9aa1" />
+## ✨ Features
 
-<img width="806" height="643" alt="image" src="https://github.com/user-attachments/assets/3934e1a5-5c62-4521-b9cc-07ae41cf03fc" />
+- 🎙️ **VocalDetectorAgent**  
+  Detects vocals using audio signal features (mel spectrogram, HPR, ZCR, flatness), returns `Yes/No` + confidence %
 
+- 🎯 **SetOptimizerAgent**  
+  Classifies tracks into: Opener, Mid-Set, Peak, Closer  
+  (based on BPM + Energy + Mood)
 
-## 🛠 Setup
-1. Clone the repo  
-2. Create `.env` using `.env.example`  
-3. Run:
+- 🧠 **SummaryAgent**  
+  Generates a readable summary string (BPM, Key, Mood, Role, Vocals)
+
+- 📊 **TransitionRecommenderAgent** *(coming soon)*  
+  Suggests the best mix transitions between tracks in a set
+
+- 📦 **ExportAgent**  
+  Exports analysis as `.json` for integration into Rekordbox, Serato, etc.
+
+- 🧰 Modular Agent Architecture  
+  Easy to plug in new agents for mood, genre, lyrics, ML models, etc.
+
+---
+
+## 🚀 How It Works
+
+1. Upload 1 or more tracks (WAV, MP3, FLAC)
+2. App analyzes each file using the agents
+3. Output includes:
+   - BPM, Key, Energy
+   - Mood + Set Role
+   - Vocal Detection (+ confidence)
+   - Suggested Transitions
+4. Export to `.json` or view inside app
+
+---
+
+## 📷 Screenshots
+
+---
+
+## 🛠 How to Run Locally
+
 ```bash
-cd app
-streamlit run moodmixr_app.py
+git clone https://github.com/karmonic540/MoodMixr.git
+cd MoodMixr
+pip install -r requirements.txt
+streamlit run app/moodmixr_app.py
