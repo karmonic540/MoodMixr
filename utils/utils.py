@@ -1,6 +1,7 @@
-# === utils.py ===
+# === utils.py (Refactored and Documented) ===
+
+# Grouped imports for clarity
 import os
-import time
 import json
 import base64
 import requests
@@ -12,16 +13,37 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import streamlit as st
 import cohere
-import spotipy
-from spotipy import Spotify
-from spotipy.oauth2 import SpotifyClientCredentials
+import io
+from mutagen import File as MutagenFile
+from mutagen.flac import FLAC
+from mutagen.mp3 import MP3
+from PIL import Image
 
 # Unified secret access
 def get_secret(key):
+    """
+    Fetch a secret value from Streamlit secrets or environment variables.
+
+    Args:
+        key (str): The key for the secret.
+
+    Returns:
+        str: The secret value, or None if not found.
+    """
     return st.secrets.get(key) or os.getenv(key)
 
 # BPM and Key Detection
 def detect_bpm_key(y, sr):
+    """
+    Detect the BPM and key of an audio signal.
+
+    Args:
+        y (np.ndarray): Audio time series.
+        sr (int): Sampling rate of the audio.
+
+    Returns:
+        tuple: BPM (int) and key (str).
+    """
     tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
     chroma = librosa.feature.chroma_stft(y=y, sr=sr)
     key = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'][np.argmax(np.mean(chroma, axis=1)) % 12]
@@ -29,6 +51,15 @@ def detect_bpm_key(y, sr):
 
 # Mood Analysis via Cohere
 def analyze_mood(audio_path):
+    """
+    Analyze the mood of an audio track using Cohere's AI model.
+
+    Args:
+        audio_path (str): Path to the audio file.
+
+    Returns:
+        str: The detected mood.
+    """
     try:
         co = cohere.Client(get_secret("COHERE_API_KEY"))
         prompt = f"Analyze the mood of this audio track based on its name: {os.path.basename(audio_path)}"
@@ -39,10 +70,28 @@ def analyze_mood(audio_path):
 
 # Energy Calculation
 def calculate_energy_profile(y):
+    """
+    Calculate the energy profile of an audio signal.
+
+    Args:
+        y (np.ndarray): Audio time series.
+
+    Returns:
+        float: Energy value.
+    """
     return float(np.mean(librosa.feature.rms(y=y)[0])) * 1000
 
 # Mood Color Map
 def get_mood_color(mood):
+    """
+    Map a mood to a corresponding color.
+
+    Args:
+        mood (str): Mood description.
+
+    Returns:
+        str: Hex color code.
+    """
     mood = mood.lower()
     return {
         "happy": "#FF9900", "uplifting": "#FF9900", "calm": "#00CCFF", "chill": "#00CCFF",
@@ -51,10 +100,30 @@ def get_mood_color(mood):
 
 # BPM to Animation Speed
 def get_bpm_animation_speed(bpm):
+    """
+    Determine the animation speed based on BPM.
+
+    Args:
+        bpm (int): Beats per minute.
+
+    Returns:
+        str: CSS animation speed.
+    """
     return "1.2s" if bpm < 80 else "1s" if bpm < 100 else "0.8s" if bpm < 120 else "0.6s"
 
 # Classify DJ Set Role
 def classify_set_role(bpm, energy, mood):
+    """
+    Classify the DJ set role based on BPM, energy, and mood.
+
+    Args:
+        bpm (int): Beats per minute.
+        energy (float): Energy level.
+        mood (str): Mood description.
+
+    Returns:
+        str: DJ set role emoji.
+    """
     mood = mood.lower()
     if bpm < 90 or "chill" in mood:
         return "🎬 Opener"
@@ -68,6 +137,15 @@ def classify_set_role(bpm, energy, mood):
 
 # Suggest DJ Transitions
 def suggest_best_transitions(track_data):
+    """
+    Suggest the best transitions between tracks for a DJ set.
+
+    Args:
+        track_data (list): List of track information dictionaries.
+
+    Returns:
+        list: List of suggested transitions with details.
+    """
     def score(a, b):
         s = 100 - abs(a['bpm'] - b['bpm'])
         if a['key'] == b['key']: s += 15
@@ -88,6 +166,15 @@ def suggest_best_transitions(track_data):
 
 # Plotly Energy Curve
 def generate_plotly_energy_curve(tracks):
+    """
+    Generate a Plotly line curve chart for track energy levels.
+
+    Args:
+        tracks (list): List of track information dictionaries.
+
+    Returns:
+        plotly.graph_objs.Figure: Plotly figure object.
+    """
     energies = [t["energy"] for t in tracks]
     labels = [t["filename"] for t in tracks]
     moods = [t["mood"] for t in tracks]
@@ -106,6 +193,18 @@ def generate_plotly_energy_curve(tracks):
 
 # Waveform Generation
 def generate_emotion_waveform(y, sr, mood="neutral", track_name=""):
+    """
+    Generate an emotion-based waveform plot for an audio track.
+
+    Args:
+        y (np.ndarray): Audio time series.
+        sr (int): Sampling rate of the audio.
+        mood (str): Mood description.
+        track_name (str): Name of the track.
+
+    Returns:
+        matplotlib.figure.Figure: Matplotlib figure object.
+    """
     mood_color_map = {
         "happy": "gold",
         "calm": "skyblue",
@@ -131,40 +230,19 @@ def generate_emotion_waveform(y, sr, mood="neutral", track_name=""):
     plt.tight_layout()
     return fig
 
-# === SPOTIFY ===
-def get_spotify_token(client_id, client_secret):
-    auth_str = f"{client_id}:{client_secret}"
-    b64_auth = base64.b64encode(auth_str.encode()).decode()
-    headers = {
-        "Authorization": f"Basic {b64_auth}",
-        "Content-Type": "application/x-www-form-urlencoded"
-    }
-    data = {"grant_type": "client_credentials"}
-    try:
-        res = requests.post("https://accounts.spotify.com/api/token", headers=headers, data=data)
-        res.raise_for_status()
-        return res.json()["access_token"]
-    except Exception as e:
-        st.error(f"🔒 Spotify Token Error: {e}")
-        return None
-
-def search_spotify_tracks(query, token, limit=5):
-    sp = Spotify(auth=token)
-    return sp.search(q=query, type='track', limit=limit)['tracks']['items']
-
-def get_spotify_audio_features(track_id, token):
-    url = f"https://api.spotify.com/v1/audio-features/{track_id}"
-    headers = {"Authorization": f"Bearer {token}"}
-    try:
-        res = requests.get(url, headers=headers)
-        res.raise_for_status()
-        return res.json()
-    except requests.exceptions.HTTPError as e:
-        st.error(f"❌ Error fetching audio features: {e.response.status_code} - {e.response.text}")
-        return {}
-
-# === YOUTUBE ===
+# YouTube Search
 def search_youtube_videos(query, max_results=5, api_key=None):
+    """
+    Search for YouTube videos using the YouTube Data API.
+
+    Args:
+        query (str): Search query.
+        max_results (int): Maximum number of results to return.
+        api_key (str): YouTube API key.
+
+    Returns:
+        list: List of video details.
+    """
     if not api_key:
         raise ValueError("YouTube API key is required.")
 
@@ -178,17 +256,31 @@ def search_youtube_videos(query, max_results=5, api_key=None):
         "key": api_key
     }
 
-    response = requests.get(url, params=params)
-    response.raise_for_status()
-    items = response.json().get("items", [])
-    return [{
-        "videoId": i["id"]["videoId"],
-        "title": i["snippet"]["title"],
-        "channel": i["snippet"]["channelTitle"],
-        "thumbnail": i["snippet"]["thumbnails"]["high"]["url"]
-    } for i in items]
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        items = response.json().get("items", [])
+        return [{
+            "videoId": i["id"]["videoId"],
+            "title": i["snippet"]["title"],
+            "channel": i["snippet"]["channelTitle"],
+            "thumbnail": i["snippet"]["thumbnails"]["high"]["url"]
+        } for i in items]
+    except requests.exceptions.RequestException as e:
+        st.error(f"YouTube API Error: {e}")
+        return []
 
 def get_youtube_video_details(video_id, api_key=None):
+    """
+    Get detailed information about a YouTube video.
+
+    Args:
+        video_id (str): YouTube video ID.
+        api_key (str): YouTube API key.
+
+    Returns:
+        dict: Video details dictionary, or None if not found.
+    """
     if not api_key:
         raise ValueError("YouTube API key is required.")
 
@@ -207,3 +299,61 @@ def get_youtube_video_details(video_id, api_key=None):
             "duration": item["contentDetails"]["duration"]
         }
     return None
+
+# Ensure YouTube audio analysis works correctly
+
+def analyze_youtube_track(video_url, title="Track"):
+    from pytube import YouTube
+    import librosa
+
+    try:
+        yt = YouTube(video_url)
+        stream = yt.streams.filter(only_audio=True).first()
+        if stream is None:
+            raise ValueError("No downloadable stream found.")
+        path = stream.download(output_path="app/audio", filename=f"{title.replace(' ', '_')}_temp.mp3")
+
+        y, sr = librosa.load(path, sr=None)
+        bpm, key = detect_bpm_key(y, sr)
+        mood = analyze_mood(path)
+        energy = calculate_energy_profile(y)
+        fig = generate_emotion_waveform(y, sr, mood, title)
+
+        return {
+            "bpm": bpm,
+            "key": key,
+            "energy": energy,
+            "mood": mood,
+            "fig": fig
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+# === ALBUM ART EXTRACTOR ===
+def extract_album_art(audio_path):
+    """
+    Extract embedded album art from audio metadata (FLAC/MP3).
+
+    Args:
+        audio_path (str): Full path to audio file.
+
+    Returns:
+        PIL.Image or None: Album art image or None if not found.
+    """
+    try:
+        metadata = MutagenFile(audio_path)
+        if metadata is None:
+            return None
+
+        if isinstance(metadata, FLAC):
+            pics = metadata.pictures
+            if pics:
+                return Image.open(io.BytesIO(pics[0].data))
+        elif isinstance(metadata, MP3):
+            for tag in metadata.tags.values():
+                if tag.FrameID == "APIC":
+                    return Image.open(io.BytesIO(tag.data))
+        return None
+    except Exception as e:
+        print(f"[AlbumArt] Error: {e}")
+        return None
