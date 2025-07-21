@@ -1,3 +1,9 @@
+# 🎼 MoodMixr Agent: Mood Analyzer
+# 🪷 Guided by Saraswati — goddess of knowledge, clarity, and sound.
+# 🧠 This agent listens with purpose. Mood is not guessed — it is felt.
+# © 2025 Karmonic | MoodMixr Signature Embedded
+# 🎼 Agent of Saraswati — Extracts emotional truth from waveform.
+from utils.constants import MOODMIXR_SIGNATURE
 import librosa
 import numpy as np
 import cohere
@@ -6,6 +12,9 @@ import streamlit as st
 co = cohere.Client(st.secrets["COHERE_API_KEY"])
 
 class MoodClassifierAgent:
+    """
+    🕊️ Saraswati blesses this class — only clarity, not noise, shall pass.
+    """
 
     @staticmethod
     def classify(track_path):
@@ -13,7 +22,6 @@ class MoodClassifierAgent:
             y, sr = librosa.load(track_path)
             energy = np.mean(librosa.feature.rms(y=y))
 
-            # AI Mood prompt
             duration = librosa.get_duration(y=y, sr=sr)
             mood_prompt = f"This is a {round(duration)} second instrumental audio with energy level {energy:.2f}. Predict its emotional mood in 1-2 words."
 
@@ -37,3 +45,6 @@ class MoodClassifierAgent:
             return "Unknown"
         mood = mood.strip().strip(",. ")
         return mood.capitalize().replace(" ,", ",").replace("  ", " ")
+
+# 🕉️ "This function embodies Saraswati’s clarity — only pure logic shall pass."
+# 🌀 “Lord Shiva guides this transformation engine.”

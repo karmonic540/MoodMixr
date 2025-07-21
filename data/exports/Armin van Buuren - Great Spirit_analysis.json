@@ -1,13 +1,13 @@
 {
-    "filename": "Hardwell - Call Me A Spaceman (1).flac",
-    "BPM": 129,
-    "Key": "A#",
+    "filename": "Armin van Buuren - Great Spirit.flac",
+    "BPM": 136,
+    "Key": "E",
     "Mood": "Calmly peaceful",
-    "Energy": 0.303,
+    "Energy": 0.216,
     "TransitionSuggestions": [
         "\ud83c\udf19 Cooldown moment \u2014 use breakdown, ambient pad, or vocal cut",
         "\ud83d\ude80 Push into big room EDM, trance, or hard techno",
         "\ud83d\udd0d Explore a calmly peaceful-inspired transition layer",
-        "\ud83c\udfbc Key: A# \u2014 consider harmonic mixing or a 1-semitone jump for tension"
+        "\ud83c\udfbc Key: E \u2014 consider harmonic mixing or a 1-semitone jump for tension"
     ]
 }

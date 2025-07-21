@@ -1,3 +1,7 @@
+# ⛩️ MoodMixr by Karmonic (Akshaykumarr Surti)
+# 🌐 A fusion of AI + Human creativity, built with sacred precision.
+# 🧠 Modular Agent-Based Architecture | 🎵 Pro DJ Tools | ⚛️ Future Sound Intelligence
+# Created: 2025-07-05 | Version: 0.9.0 | License: MIT + Karma Clause
 import os
 import sys
 import io
@@ -6,21 +10,24 @@ import librosa
 import librosa.display
 import matplotlib.pyplot as plt
 import numpy as np
+import soundfile as sf
 from mutagen import File as MutagenFile
 from mutagen.flac import FLAC
 from mutagen.mp3 import MP3
 from PIL import Image
 from io import BytesIO
-from PIL import Image
-import soundfile as sf
-import soundfile as sf
+
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from utils.utils import extract_album_art
 from moodmixr_agent import run_moodmixr_agent
+from agents.layout_agent import LayoutAgent
+
+
 
 # 🎨 Streamlit Config
 st.set_page_config(page_title="MoodMixr", layout="wide")
+LayoutAgent.apply_global_styles()
 
 # 🔧 Sidebar Navigation
 st.sidebar.title("🎛️ MoodMixr")
@@ -28,7 +35,7 @@ page = st.sidebar.radio("Navigate", ["Agent Analyzer"])
 
 # 🧠 AGENT ANALYZER TAB
 if page == "Agent Analyzer":
-    st.title("🧠 Agent Analyzer")
+    LayoutAgent.page_header("🧠 Agent Analyzer")
     uploaded_files = st.file_uploader("🎵 Upload one or more track", 
                                       type=["mp3", "wav", "flac", "m4a"], 
                                       accept_multiple_files=True)
@@ -76,36 +83,88 @@ if uploaded_files:
     st.markdown("### 🎵 Preview Track")
     st.audio(selected_path)
 
-    from utils.utils import extract_album_art
+    from utils.utils import extract_album_art, extract_track_metadata, get_mood_color
     art = extract_album_art(selected_path)
-    if art:
-        st.image(art, caption="Album Art", width=250)
+    meta = extract_track_metadata(selected_path)
+
+
+    col1, col2 = st.columns([1, 3])
+    with col1:
+        if art:
+            st.image(art, caption="Album Art", width=180)
+    with col2:
+        st.markdown(f"""
+            <div style='margin-top:1rem'>
+                <h4 style='margin-bottom:0;'>🎵 <b>{meta['title']}</b></h4>
+                <p style='margin:0;'>👤 <b>{meta['artist']}</b></p>
+                <p style='margin:0;'>💿 <b>{meta['album']}</b></p>
+            </div>
+        """, unsafe_allow_html=True)
+
 
     # Mood color
-    from utils.utils import get_mood_color
     mood_color = get_mood_color(result["Mood"])
     st.markdown(f"### 🎨 Mood: *{result['Mood']}*")
     st.markdown(f"<div style='height:20px; background-color:{mood_color}; border-radius:5px'></div>", unsafe_allow_html=True)
 
-    # Waveform
-    try:
-        import librosa
-        import librosa.display
-        import matplotlib.pyplot as plt
-        import numpy as np
-        from io import BytesIO
-        from PIL import Image
 
+    # === WAVEFORM VISUALIZATION ===
+    try:
+        # Mood color + BPM-based glow speed
+        bpm = result.get("BPM", 120)
+        mood_color = get_mood_color(result["Mood"])
+        glow_speed = (
+            "1.2s" if bpm < 80 else
+            "1s" if bpm < 110 else
+            "0.8s" if bpm < 128 else
+            "0.6s"
+        )
+
+        # Inject animated CSS glow for waveform
+        st.markdown(f"""
+        <style>
+        @keyframes pulseGlow {{
+            0%   {{ box-shadow: 0 0 10px {mood_color}33; }}
+            100% {{ box-shadow: 0 0 25px {mood_color}CC; }}
+        }}
+        .glow-wave {{
+            animation: pulseGlow {glow_speed} ease-in-out infinite alternate;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }}
+        </style>
+        """, unsafe_allow_html=True)
+
+        # Load waveform and render
         y, sr = librosa.load(selected_path)
-        fig, ax = plt.subplots(figsize=(8, 2.5))
-        librosa.display.waveshow(y, sr=sr, color=mood_color, alpha=0.9)
-        ax.set_axis_off()
+        fig, ax = plt.subplots(figsize=(10, 3))
+
+        librosa.display.waveshow(y, sr=sr, color=mood_color, alpha=0.85)
+        ax.set_facecolor("#0D0D0D")
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_frame_on(False)
+        for spine in ax.spines.values():
+            spine.set_visible(False)
+
         buf = BytesIO()
-        fig.savefig(buf, format="png", bbox_inches="tight", pad_inches=0.0)
+        fig.savefig(buf, format="png", bbox_inches="tight", pad_inches=0.1, dpi=140, facecolor="#0D0D0D")
         plt.close(fig)
-        st.image(Image.open(buf), use_column_width=True)
+
+        st.markdown("### 🌊 Mood Waveform", unsafe_allow_html=True)
+        st.markdown('<div class="glow-wave">', unsafe_allow_html=True)
+        st.markdown('<div class="glow-wave">', unsafe_allow_html=True)
+        st.image(Image.open(buf), use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
     except Exception as e:
         st.warning(f"Waveform error: {e}")
+
+
 
     # Metrics
     st.markdown("---")
@@ -131,3 +190,9 @@ if uploaded_files:
             st.download_button("📦 Download JSON", f, file_name=export_filename)
 else:
     st.info("👆 Upload audio files to begin.")
+st.markdown("""
+<div style='text-align:center; margin-top:3rem; font-size:13px; color:#BBBBBB'>
+    ॐ नमः शिवाय — Let this DJ flow awaken your sound.<br>
+    <span style='font-size:11px;'>Powered by MoodMixr · Built by Karmonic</span>
+</div>
+""", unsafe_allow_html=True)

@@ -1,4 +1,14 @@
+# 🔱 MoodMixr Agent: Set Optimizer
+# 🔥 Guided by Lord Shiva — the transformer of rhythm and DJ flow.
+# 🎛️ This agent reshapes energy into harmony through sacred transitions.
+# © 2025 Karmonic | MoodMixr Signature Embedded
+# 🔱 Agent of Shiva — Transforms raw tempo into set-building power.
+from utils.constants import MOODMIXR_SIGNATURE
+
 class SetOptimizerAgent:
+    """
+    🔥 Shiva dances through this logic — transitions become divine transformations.
+    """
 
     @staticmethod
     def classify_role(bpm, energy):
@@ -19,3 +29,6 @@ class SetOptimizerAgent:
         except Exception as e:
             print(f"[SetOptimizerAgent] Error: {e}")
             return "Unknown"
+
+# 🕉️ "This function embodies Saraswati’s clarity — only pure logic shall pass."
+# 🌀 “Lord Shiva guides this transformation engine.”
