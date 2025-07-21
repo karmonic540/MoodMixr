@@ -190,6 +190,90 @@ if uploaded_files:
             st.download_button("📦 Download JSON", f, file_name=export_filename)
 else:
     st.info("👆 Upload audio files to begin.")
+
+    from utils.utils import extract_track_metadata
+    from agents.set_optimizer_agent import SetOptimizerAgent
+
+
+    # Initialize session state for DJ Set Queue
+    if "dj_set_queue" not in st.session_state:
+        st.session_state.dj_set_queue = []
+
+    # --- DJ Set Preview Tab ---
+    st.markdown("## 🎧 DJ Set Preview & Optimizer")
+
+    uploaded_tracks = st.file_uploader("Upload your DJ tracks", type=["mp3", "wav", "flac"], accept_multiple_files=True)
+    
+    from utils.utils import detect_bpm_key, analyze_mood, calculate_energy_profile, extract_track_metadata
+
+    if uploaded_tracks:
+        new_files = [f.name for f in uploaded_tracks]
+        existing_files = [t["file"].name for t in st.session_state.dj_set_queue]
+
+        for file in uploaded_tracks:
+            if file.name not in existing_files:
+                # Save file
+                temp_path = os.path.join("app", "audio", file.name)
+                with open(temp_path, "wb") as f:
+                    f.write(file.getbuffer())
+
+                try:
+                    # ANALYZE AUDIO
+                    y, sr = librosa.load(temp_path, sr=None)
+                    bpm, key = detect_bpm_key(y, sr)
+                    energy = calculate_energy_profile(y)
+                    mood = analyze_mood(temp_path)
+                except Exception as e:
+                    print(f"[AudioAnalysis] Failed: {e}")
+                    bpm, key, energy, mood = "?", "?", 0.0, "Unknown"
+
+                # METADATA
+                metadata = extract_track_metadata(temp_path)
+                filename_display = f"{metadata.get('artist', 'Unknown')} - {metadata.get('title', file.name)}"
+
+                track_info = {
+                    "name": metadata.get("title", file.name),
+                    "artist": metadata.get("artist", "Unknown"),
+                    "bpm": round(bpm) if isinstance(bpm, (int, float)) else "Detecting...",
+                    "key": key or "Detecting...",
+                    "mood": mood or "Analyzing...",
+                    "energy": round(energy, 2),
+                    "file": file,
+                    "filename": filename_display
+                }
+
+                st.session_state.dj_set_queue.append(track_info)
+
+
+    # Display Queue
+    st.markdown("### 📋 Current Track Queue")
+
+    if st.session_state.dj_set_queue:
+        for i, track in enumerate(st.session_state.dj_set_queue):
+            col1, col2 = st.columns([6, 1])
+            with col1:
+                st.markdown(f"**{i+1}. {track['name']}** by *{track['artist']}*")
+                st.caption(f"BPM: {track['bpm']} | Key: {track['key']} | Mood: {track['mood']}")
+            with col2:
+                if st.button("⬆️", key=f"up_{i}") and i > 0:
+                    st.session_state.dj_set_queue[i], st.session_state.dj_set_queue[i - 1] = st.session_state.dj_set_queue[i - 1], st.session_state.dj_set_queue[i]
+                if st.button("⬇️", key=f"down_{i}") and i < len(st.session_state.dj_set_queue) - 1:
+                    st.session_state.dj_set_queue[i], st.session_state.dj_set_queue[i + 1] = st.session_state.dj_set_queue[i + 1], st.session_state.dj_set_queue[i]
+
+        st.markdown("### 🧠 Optimize Set Flow")
+        from utils.utils import generate_plotly_energy_curve
+        st.markdown("### 🔋 Energy Flow Across Set")
+        st.plotly_chart(generate_plotly_energy_curve(st.session_state.dj_set_queue), use_container_width=True)
+
+        if st.button("🚀 Run Set Optimizer"):
+            optimized_queue = SetOptimizerAgent.optimize_dj_set(st.session_state.dj_set_queue)
+            st.session_state.dj_set_queue = optimized_queue
+            st.success("Set flow optimized!")
+
+    else:
+        st.info("Upload some tracks to begin building your set!")
+
+
 st.markdown("""
 <div style='text-align:center; margin-top:3rem; font-size:13px; color:#BBBBBB'>
     ॐ नमः शिवाय — Let this DJ flow awaken your sound.<br>
