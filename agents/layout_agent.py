@@ -3,6 +3,8 @@
 # 📐 Elevates UI to industry-defining standards
 # © 2025 Karmonic | MoodMixr Signature Embedded
 
+# layout_agent.py
+
 import streamlit as st
 
 class LayoutAgent:
@@ -44,15 +46,13 @@ class LayoutAgent:
     def page_header(title_text):
         st.markdown(f"<h2 style='text-align:center;'>{title_text}</h2>", unsafe_allow_html=True)
 
-    @staticmethod
-    def apply_mood_background(mood=None):
-        st.markdown("""
+        st.markdown(f"""
         <style>
-        .stApp {
-            background: linear-gradient(135deg, #121212, #0D0D0D);
+        .stApp {{
+            background: {gradient};
             background-attachment: fixed;
             background-size: cover;
             transition: background 0.6s ease-in-out;
-        }
+        }}
         </style>
         """, unsafe_allow_html=True)

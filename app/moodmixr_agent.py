@@ -7,48 +7,39 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from agents.audio_agent import AudioAnalyzerAgent
-from agents.mood_agent import MoodClassifierAgent
-from agents.transition_agent import TransitionRecommenderAgent
-from agents.export_agent import ExportAgent
+# 🧠 MoodMixr Central Agent Router
+# Modular AI agents for audio mood, energy, transitions, and external discovery
+
+from agents.mood_agent import MoodAgent
+from agents.genre_classifier_agent import GenreClassifierAgent
 from agents.vocal_detector_agent import VocalDetectorAgent
 from agents.set_optimizer_agent import SetOptimizerAgent
 from agents.summary_agent import SummaryAgent
-from agents.discover_agent import DiscoverAgent
+from agents.transition_agent import TransitionRecommenderAgent
 
 def run_moodmixr_agent(track_path):
-    print("Analyzing:", track_path)
-
-    # Core agents
-    bpm, key = AudioAnalyzerAgent.analyze(track_path)
-    mood, energy = MoodClassifierAgent.classify(track_path)
-    transitions = TransitionRecommenderAgent.recommend(bpm, key, mood, energy)
-
-    # New agents
-    has_vocals, vocal_confidence = VocalDetectorAgent.detect(track_path)
-    set_role = SetOptimizerAgent.classify_role(bpm, energy)
-    summary = SummaryAgent.generate_summary(
-        filename=os.path.basename(track_path),
-        bpm=bpm,
-        key=key,
-        mood=mood,
-        set_role=set_role,
-        has_vocals=has_vocals
-    )
-
-    # Export (still basic)
-    ExportAgent.export_metadata(track_path, bpm, key, mood, energy, transitions)
+    mood = MoodAgent.analyze(track_path)
+    genre = GenreClassifierAgent.classify(track_path)
+    vocals, confidence = VocalDetectorAgent.detect(track_path)
+    summary = SummaryAgent.summarize(track_path)
+    bpm, key = MoodAgent.detect_bpm_key(track_path)
+    energy = MoodAgent.calculate_energy(track_path)
+    role = SetOptimizerAgent.classify_role(bpm, energy)
+    transitions = TransitionRecommenderAgent.recommend(track_path, bpm, key, mood, energy)
 
     return {
+        "Mood": mood,
+        "Genre": genre,
+        "HasVocals": vocals,
+        "VocalConfidence": confidence,
+        "Summary": summary,
         "BPM": bpm,
         "Key": key,
-        "Mood": mood,
         "Energy": energy,
-        "Suggestions": transitions,
-        "SetRole": set_role,
-        "HasVocals": has_vocals,
-        "VocalConfidence": vocal_confidence,
-        "Summary": summary
+        "SetRole": role,
+        "Suggestions": transitions
     }
+
 def run_discover_agent(query):
+    from agents.discover_agent import DiscoverAgent  # 👈 local import to avoid circular error
     return DiscoverAgent.fetch_tracks(query)
