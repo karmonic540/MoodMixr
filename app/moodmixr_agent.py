@@ -14,6 +14,7 @@ from agents.export_agent import ExportAgent
 from agents.vocal_detector_agent import VocalDetectorAgent
 from agents.set_optimizer_agent import SetOptimizerAgent
 from agents.summary_agent import SummaryAgent
+from agents.discover_agent import DiscoverAgent
 
 def run_moodmixr_agent(track_path):
     print("Analyzing:", track_path)
@@ -21,7 +22,7 @@ def run_moodmixr_agent(track_path):
     # Core agents
     bpm, key = AudioAnalyzerAgent.analyze(track_path)
     mood, energy = MoodClassifierAgent.classify(track_path)
-    transitions = TransitionRecommenderAgent.recommend(track_path, bpm, key, mood, energy)
+    transitions = TransitionRecommenderAgent.recommend(bpm, key, mood, energy)
 
     # New agents
     has_vocals, vocal_confidence = VocalDetectorAgent.detect(track_path)
@@ -49,3 +50,5 @@ def run_moodmixr_agent(track_path):
         "VocalConfidence": vocal_confidence,
         "Summary": summary
     }
+def run_discover_agent(query):
+    return DiscoverAgent.fetch_tracks(query)

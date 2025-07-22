@@ -31,7 +31,8 @@ LayoutAgent.apply_global_styles()
 
 # 🔧 Sidebar Navigation
 st.sidebar.title("MoodMixr")
-page = st.sidebar.radio("Navigate", ["Agent Analyzer", "Set Flow Designer"])
+page = st.sidebar.radio("Navigate", ["Agent Analyzer", "Set Flow Designer", "Discover & Compare"])
+
 
 from utils.utils import (
     detect_bpm_key,
@@ -108,20 +109,41 @@ if page == "Agent Analyzer":
         st.markdown(f"### Mood: *{result['Mood']}*")
         st.markdown(f"<div style='height:20px; background-color:{mood_color}; border-radius:5px'></div>", unsafe_allow_html=True)
 
-        # === Waveform ===
+        # === WAVEFORM VISUALIZATION ===
         try:
             y, sr = librosa.load(selected_path)
-            fig, ax = plt.subplots(figsize=(10, 3))
+            fig, ax = plt.subplots(figsize=(10, 3), facecolor="#0D0D0D")
+
             librosa.display.waveshow(y, sr=sr, color=mood_color, alpha=0.85)
-            ax.set_xticks([]), ax.set_yticks([]), ax.set_frame_on(False)
+
+            # === Styling ===
+            ax.set_facecolor("#0D0D0D")
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.set_frame_on(False)
+
+            # Title above waveform
+            ax.set_title("Waveform Energy Map", fontsize=14, color="white", pad=10, loc="center")
+
+            # Center-aligned Time label below waveform
+            ax.text(0.5, -0.25, 'Time', ha='center', va='center', transform=ax.transAxes,
+                    fontsize=10, color='white', alpha=0.7)
+
+            # Hide borders
             for spine in ax.spines.values():
                 spine.set_visible(False)
+
+            # Export
             buf = BytesIO()
-            fig.savefig(buf, format="png", bbox_inches="tight", pad_inches=0.1, dpi=140)
+            fig.savefig(buf, format="png", bbox_inches="tight", pad_inches=0.1, dpi=140, facecolor="#0D0D0D")
             plt.close(fig)
+
             st.image(Image.open(buf), use_container_width=True)
+
         except Exception as e:
             st.warning(f"Waveform error: {e}")
+            st.error("Failed to generate waveform visualization.")
+
 
         # === Results ===
         st.subheader("Track Intelligence")
@@ -162,6 +184,7 @@ elif page == "Set Flow Designer":
                     bpm, key = detect_bpm_key(y, sr)
                     energy = calculate_energy_profile(y)
                     mood = analyze_mood(temp_path)
+                    mood = mood.strip().strip('"').strip(",").capitalize()
                 except Exception as e:
                     bpm, key, energy, mood = "?", "?", 0.0, "Unknown"
 
@@ -178,24 +201,120 @@ elif page == "Set Flow Designer":
                 }
                 st.session_state.dj_set_queue.append(track_info)
 
+        # Auto-scroll to energy graph
+        st.markdown("<a href='#dj-energy' style='text-decoration:none;'>🔽 View Energy Map</a>", unsafe_allow_html=True)
+
     if st.session_state.dj_set_queue:
         st.markdown("### Current Track Queue")
+
+        for i, track in enumerate(st.session_state.dj_set_queue):
+            col1, col2 = st.columns([8, 1])
+            with col1:
+                with st.expander(f"{i+1}. {track['name']} by {track['artist']}"):
+                    st.caption(f"BPM: {track['bpm']} | Key: {track['key']} | Mood: {track['mood']}")
+                    st.audio(track["file"])
+            with col2:
+                if st.button("❌", key=f"remove_{i}"):
+                    st.session_state.dj_set_queue.pop(i)
+                    st.experimental_rerun()
+
+        # === ENERGY FLOW VISUAL ===
+        st.markdown("---", unsafe_allow_html=True)
+        st.markdown("<h4 id='dj-energy'>Energy Flow</h4>", unsafe_allow_html=True)
+        st.plotly_chart(generate_plotly_energy_curve(st.session_state.dj_set_queue), use_container_width=True)
+
+        # === TRANSITION INSIGHTS ===
+        from agents.transition_agent import TransitionRecommenderAgent
+        st.markdown("---")
+        st.markdown("### Transition Insights")
 
         for i, track in enumerate(st.session_state.dj_set_queue):
             with st.expander(f"{i+1}. {track['name']} by {track['artist']}"):
                 st.caption(f"BPM: {track['bpm']} | Key: {track['key']} | Mood: {track['mood']}")
                 st.audio(track["file"])
 
-        st.markdown("### Optimize Set Flow")
-        st.plotly_chart(generate_plotly_energy_curve(st.session_state.dj_set_queue), use_container_width=True)
+                try:
+                    bpm = float(track['bpm']) if isinstance(track['bpm'], (int, float)) else 120
+                    energy = float(track['energy']) if isinstance(track['energy'], (int, float)) else 0.5
+                    mood = str(track['mood']) or "Neutral"
+                    key = str(track['key']) or "C"
 
+                    suggestions = TransitionRecommenderAgent.recommend(
+                        bpm=bpm,
+                        key=key,
+                        mood=mood,
+                        energy=energy
+                    )
+                    st.markdown("**Suggestions:**")
+                    for s in suggestions:
+                        st.markdown(f"<div style='background-color:#1E1E1E; padding:5px 10px; border-radius:6px; margin-bottom:5px; color:#BBB;'>{s}</div>", unsafe_allow_html=True)
+                except Exception as e:
+                    st.warning(f"Could not generate transitions: {e}")
+
+        # === OPTIMIZER ===
+        st.markdown("---")
         if st.button("Run Set Optimizer"):
             optimized_queue = SetOptimizerAgent.optimize_dj_set(st.session_state.dj_set_queue)
             st.session_state.dj_set_queue = optimized_queue
             st.success("Set flow optimized!")
 
+        # === EXPORT TO JSON ===
+        import json
+        export_data = [
+            {
+                "order": i+1,
+                "name": t["name"],
+                "artist": t["artist"],
+                "bpm": t["bpm"],
+                "key": t["key"],
+                "mood": t["mood"],
+                "energy": t["energy"]
+            } for i, t in enumerate(st.session_state.dj_set_queue)
+        ]
+        export_json = json.dumps(export_data, indent=4)
+        st.download_button("Export DJ Set (JSON)", export_json, file_name="dj_set_export.json")
+
     else:
         st.info("Upload some tracks to begin building your set.")
+# === DISCOVER & COMPARE TAB ===
+elif page == "Discover & Compare":
+    from moodmixr_agent import run_discover_agent
+
+    LayoutAgent.page_header("Discover & Compare")
+    query = st.text_input("Search Spotify", placeholder="Try 'Fred again', 'Afterlife', etc.")
+
+    if query:
+        results = run_discover_agent(query)
+
+        if results:
+            for track in results:
+                col1, col2 = st.columns([2, 1])
+                with col1:
+                    st.markdown(f"**{track['name']}** by *{track['artist']}*")
+                    st.caption(f"Album: {track['album']}")
+                    st.image(track['image'], width=120)
+                with col2:
+                    st.audio(track['preview_url'])
+
+                st.markdown(f"**BPM:** {track['bpm']} | **Key:** {track['key']} | **Energy:** {track['energy']} | **Mood:** {track['mood']}")
+
+                if st.button("➕ Add to Set", key=f"add_{track['id']}"):
+                    if "dj_set_queue" not in st.session_state:
+                        st.session_state.dj_set_queue = []
+
+                    st.session_state.dj_set_queue.append({
+                        "name": track["name"],
+                        "artist": track["artist"],
+                        "bpm": track["bpm"],
+                        "key": track["key"],
+                        "mood": track["mood"],
+                        "energy": track["energy"],
+                        "file": None,
+                        "filename": f"{track['name']} (Spotify)"
+                    })
+                    st.success(f"✅ Added '{track['name']}' to your DJ set.")
+        else:
+            st.warning("No results found.")
 
 # === Footer ===
 st.markdown("""

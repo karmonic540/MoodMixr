@@ -12,10 +12,13 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import streamlit as st
 import cohere
+import base64
+import requests
 from mutagen import File as MutagenFile
 from mutagen.flac import FLAC
 from mutagen.mp3 import MP3
 from PIL import Image
+from utils.secrets import get_secret
 
 # === SECRET MANAGEMENT ===
 def get_secret(key):
@@ -166,8 +169,6 @@ def extract_album_art(audio_path):
         print(f"[AlbumArt] Error: {e}")
         return None
 
-
-
 # === YOUTUBE INTEGRATION ===
 def search_youtube_videos(query, max_results=5, api_key=None):
     if not api_key:
@@ -271,3 +272,54 @@ def extract_track_metadata(audio_path):
     except Exception as e:
         print(f"[Metadata] Error: {e}")
         return {"artist": "Unknown", "title": "Unknown", "album": "Unknown"}
+    
+# === SPOTIFY INTEGRATION ===
+def get_spotify_token():
+    client_id = st.secrets["SPOTIFY_CLIENT_ID"]
+    client_secret = st.secrets["SPOTIFY_CLIENT_SECRET"]
+
+    url = "https://accounts.spotify.com/api/token"
+    headers = {
+        "Authorization": "Basic " + base64.b64encode(f"{client_id}:{client_secret}".encode()).decode()
+    }
+    data = {"grant_type": "client_credentials"}
+
+    response = requests.post(url, headers=headers, data=data)
+    
+    token = response.json().get("access_token")
+    print("✅ Spotify Token:", token)  # 🔥 Debug print
+
+    return token
+
+def search_spotify_track(query, token):
+    url = "https://api.spotify.com/v1/search"
+    headers = {"Authorization": f"Bearer {token}"}
+    params = {"q": query, "type": "track", "limit": 5}
+
+    try:
+        r = requests.get(url, headers=headers, params=params)
+        r.raise_for_status()
+        print("🔍 Spotify Raw Response:", r.json())  # 👈 add this line to debug
+        items = r.json()["tracks"]["items"]
+        return [{
+            "id": t["id"],
+            "name": t["name"],
+            "artist": t["artists"][0]["name"],
+            "album": t["album"]["name"],
+            "preview_url": t["preview_url"],
+            "image": t["album"]["images"][0]["url"] if t["album"]["images"] else ""
+        } for t in items]
+    except Exception as e:
+        print(f"[Spotify Search] ❌ ERROR: {e}")
+        return []
+
+def get_spotify_audio_features(track_id, token):
+    url = f"https://api.spotify.com/v1/audio-features/{track_id}"
+    headers = {"Authorization": f"Bearer {token}"}
+    try:
+        r = requests.get(url, headers=headers)
+        r.raise_for_status()
+        return r.json()
+    except Exception as e:
+        print(f"[Spotify Features] Error: {e}")
+        return None

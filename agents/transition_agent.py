@@ -9,7 +9,7 @@ class TransitionRecommenderAgent:
     """
 
     @staticmethod
-    def recommend(track_path, bpm, key, mood, energy):
+    def recommend(bpm, key, mood, energy):
         try:
             transitions = []
 
