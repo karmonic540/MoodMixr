@@ -43,16 +43,16 @@ class LayoutAgent:
         """, unsafe_allow_html=True)
 
     @staticmethod
-    def page_header(title_text):
-        st.markdown(f"<h2 style='text-align:center;'>{title_text}</h2>", unsafe_allow_html=True)
+    def page_header(title):
+        st.markdown(
+            f"""
+            <div style="padding: 1.5rem 1rem; text-align:center;
+                background: linear-gradient(to right, #1f1c2c, #928DAB);
+                color: white; font-size: 28px; font-weight: bold;
+                border-radius: 12px;">
+                {title}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-        st.markdown(f"""
-        <style>
-        .stApp {{
-            background: {gradient};
-            background-attachment: fixed;
-            background-size: cover;
-            transition: background 0.6s ease-in-out;
-        }}
-        </style>
-        """, unsafe_allow_html=True)

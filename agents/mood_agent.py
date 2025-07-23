@@ -1,8 +1,7 @@
-# 🎼 MoodMixr Agent: Mood Analyzer
-# 🪷 Guided by Saraswati — goddess of knowledge, clarity, and sound.
-# 🧠 This agent listens with purpose. Mood is not guessed — it is felt.
-# © 2025 Karmonic | MoodMixr Signature Embedded
-# 🎼 Agent of Saraswati — Extracts emotional truth from waveform.
+# 🎧 MoodMixr Agent: Mood Analyzer
+# 🕉️ Guided by Saraswati – goddess of clarity, sound, and wisdom.
+# 🔍 Extracts emotional truth from waveform using AI and energy patterns.
+
 from utils.constants import MOODMIXR_SIGNATURE
 import librosa
 import numpy as np
@@ -13,23 +12,36 @@ co = cohere.Client(st.secrets["COHERE_API_KEY"])
 
 class MoodClassifierAgent:
     """
-    🕊️ Saraswati blesses this class — only clarity, not noise, shall pass.
+    Saraswati blesses this class — only clarity, not noise, shall pass.
     """
 
     @staticmethod
-    def classify(track_path):
+    def analyze(track_path):
+        """
+        Analyzes audio to classify mood using waveform and energy.
+
+        Parameters:
+            track_path (str): Path to the uploaded audio file.
+
+        Returns:
+            tuple: (mood_label, energy_score)
+        """
         try:
             y, sr = librosa.load(track_path)
             energy = np.mean(librosa.feature.rms(y=y))
 
             duration = librosa.get_duration(y=y, sr=sr)
-            mood_prompt = f"This is a {round(duration)} second instrumental audio with energy level {energy:.2f}. Predict its emotional mood in 1-2 words."
+            mood_prompt = (
+                f"This is a {round(duration)} second instrumental audio with "
+                f"energy level {energy:.2f}. Predict the overall mood."
+            )
 
             response = co.generate(
                 prompt=mood_prompt,
                 max_tokens=6,
                 temperature=0.6
             )
+
             raw_mood = response.generations[0].text.strip()
             mood = MoodClassifierAgent._clean_mood(raw_mood)
 
@@ -43,8 +55,8 @@ class MoodClassifierAgent:
     def _clean_mood(mood):
         if not mood:
             return "Unknown"
-        mood = mood.strip().strip(",. ")
-        return mood.capitalize().replace(" ,", ",").replace("  ", " ")
+        mood = mood.strip().strip(".")
+        return mood.capitalize().replace(" .", ".").replace(" .", " ")
 
-# 🕉️ "This function embodies Saraswati’s clarity — only pure logic shall pass."
-# 🌀 “Lord Shiva guides this transformation engine.”
+# 🟣 "This function embodies Saraswati’s clarity – only pure logic shall pass."
+# 🔱 "Lord Shiva guides this transformation engine."

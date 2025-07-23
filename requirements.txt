@@ -9,3 +9,5 @@ cohere
 requests
 plotly
 pytube
+yt-dlp
+youtube-search

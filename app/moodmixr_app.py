@@ -2,8 +2,13 @@
 # 🌐 A fusion of AI + Human creativity, built with sacred precision.
 # 🧠 Modular Agent-Based Architecture | 🎵 Pro DJ Tools | ⚛️ Future Sound Intelligence
 # Created: 2025-07-05 | Version: 0.9.0 | License: MIT + Karma Clause
-import os
+# ⛩️ MoodMixr by Karmonic (Akshaykumarr Surti)
+# 🌐 A fusion of AI + Human creativity, built with sacred precision.
+# 🧠 Modular Agent-Based Architecture | 🎵 Pro DJ Tools | ⚛️ Future Sound Intelligence
+# Created: 2025-07-05 | Version: 0.9.0 | License: MIT + Karma Clause
+
 import sys
+import os
 import io
 import streamlit as st
 import librosa
@@ -17,23 +22,20 @@ from mutagen.mp3 import MP3
 from PIL import Image
 from io import BytesIO
 
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from moodmixr_agent import run_moodmixr_agent
 from agents.layout_agent import LayoutAgent
 
-
-
-# 🎨 Streamlit Config
+# 📐 Streamlit Config
 st.set_page_config(page_title="MoodMixr", layout="wide")
 LayoutAgent.apply_global_styles()
 
-# 🔧 Sidebar Navigation
+# 🎛️ Sidebar Navigation
 st.sidebar.title("MoodMixr")
 page = st.sidebar.radio("Navigate", ["Agent Analyzer", "Set Flow Designer", "Discover & Compare"])
 
-
+# 📦 Core Utilities and Agents
 from utils.utils import (
     detect_bpm_key,
     analyze_mood,
@@ -41,9 +43,11 @@ from utils.utils import (
     extract_album_art,
     extract_track_metadata,
     get_mood_color,
-    generate_plotly_energy_curve
+    generate_plotly_energy_curve,
 )
+
 from agents.set_optimizer_agent import SetOptimizerAgent
+
 
 # === AGENT ANALYZER TAB ===
 if page == "Agent Analyzer":
@@ -277,44 +281,106 @@ elif page == "Set Flow Designer":
     else:
         st.info("Upload some tracks to begin building your set.")
 # === DISCOVER & COMPARE TAB ===
+
 elif page == "Discover & Compare":
     from moodmixr_agent import run_discover_agent
 
     LayoutAgent.page_header("Discover & Compare")
-    query = st.text_input("Search Spotify", placeholder="Try 'Fred again', 'Afterlife', etc.")
+    st.subheader("🎧 Discover Tracks on Spotify")
 
+    query = st.text_input("Search Spotify", placeholder="Try 'Sunset Lover', 'Fred Again..', etc.")
+    use_youtube_fallback = st.sidebar.checkbox("🎵 Use YouTube fallback if Spotify preview fails", value=True)
+    results_per_page = 10
+
+    # Init session state
     if query:
-        results = run_discover_agent(query)
+        if "discover_query" not in st.session_state:
+            st.session_state.discover_query = ""
+        if "discover_index" not in st.session_state:
+            st.session_state.discover_index = 0
+        if "discover_results" not in st.session_state:
+            st.session_state.discover_results = []
 
-        if results:
-            for track in results:
-                col1, col2 = st.columns([2, 1])
-                with col1:
-                    st.markdown(f"**{track['name']}** by *{track['artist']}*")
-                    st.caption(f"Album: {track['album']}")
-                    st.image(track['image'], width=120)
-                with col2:
-                    st.audio(track['preview_url'])
+        # Reset if new query
+        if st.session_state.discover_query != query:
+            st.session_state.discover_query = query
+            st.session_state.discover_results = []
+            st.session_state.discover_index = 0
 
-                st.markdown(f"**BPM:** {track['bpm']} | **Key:** {track['key']} | **Energy:** {track['energy']} | **Mood:** {track['mood']}")
+        # Load next results
+        new_results = run_discover_agent(query, st.session_state.discover_index, results_per_page,use_youtube_fallback=use_youtube_fallback)
+        st.session_state.discover_results += new_results
+        st.session_state.discover_index += results_per_page
 
-                if st.button("➕ Add to Set", key=f"add_{track['id']}"):
-                    if "dj_set_queue" not in st.session_state:
-                        st.session_state.dj_set_queue = []
+        # Filters
+        st.markdown("### 🔍 Filters")
+        show_only_preview = st.checkbox("Only show tracks with preview", value=False)
+        with st.expander("🎛️ Filter by BPM & Energy"):
+            bpm_range = st.slider("BPM", 60, 200, (60, 200))
+            energy_range = st.slider("Energy", 0.0, 1.0, (0.0, 1.0), step=0.05)
 
-                    st.session_state.dj_set_queue.append({
-                        "name": track["name"],
-                        "artist": track["artist"],
-                        "bpm": track["bpm"],
-                        "key": track["key"],
-                        "mood": track["mood"],
-                        "energy": track["energy"],
-                        "file": None,
-                        "filename": f"{track['name']} (Spotify)"
-                    })
-                    st.success(f"✅ Added '{track['name']}' to your DJ set.")
-        else:
-            st.warning("No results found.")
+        # Robust filter logic
+        results_to_show = []
+        for t in st.session_state.discover_results:
+            has_valid_bpm = isinstance(t["bpm"], (int, float)) and t["bpm"] > 0
+            has_valid_energy = isinstance(t["energy"], (int, float)) and t["energy"] > 0
+
+            if show_only_preview and not t.get("preview_url"):
+                continue
+            if has_valid_bpm and not (bpm_range[0] <= t["bpm"] <= bpm_range[1]):
+                continue
+            if has_valid_energy and not (energy_range[0] <= t["energy"] <= energy_range[1]):
+                continue
+
+            results_to_show.append(t)
+
+        # Display tracks
+        for track in results_to_show:
+            col1, col2 = st.columns([1, 3])
+            with col1:
+                st.image(track["image"], width=100)
+            with col2:
+                st.markdown(f"**{track['name']}** by *{track['artist']}*")
+                st.markdown(f"<span style='color: #00ff99'>Album:</span> {track['album']}", unsafe_allow_html=True)
+                st.markdown(
+                    f"<span style='color: #CCCCCC'>BPM:</span> <b>{track['bpm']}</b> &nbsp; "
+                    f"<span style='color: #CCCCCC'>Key:</span> <b>{track['key']}</b> &nbsp; "
+                    f"<span style='color: #CCCCCC'>Energy:</span> <b>{track['energy']}</b> &nbsp; "
+                    f"<span style='color: #CCCCCC'>Mood:</span> <b>{track['mood']}</b>",
+                    unsafe_allow_html=True
+                )
+                if track.get("preview_url"):
+                    st.audio(track["preview_url"], format="audio/mp3")
+                else:
+                    st.components.v1.html(
+                        f"""<iframe style="border-radius:12px" 
+                            src="https://open.spotify.com/embed/track/{track['id']}" 
+                            width="100%" height="80" frameBorder="0" allowtransparency="true" allow="encrypted-media">
+                        </iframe>""",
+                        height=100
+                    )
+
+            if st.button(" Add to Set", key=f"add_{track['id']}"):
+                if "dj_set_queue" not in st.session_state:
+                    st.session_state.dj_set_queue = []
+                st.session_state.dj_set_queue.append({
+                    "name": track["name"],
+                    "artist": track["artist"],
+                    "bpm": track["bpm"],
+                    "key": track["key"],
+                    "mood": track["mood"],
+                    "energy": track["energy"],
+                    "file": None,
+                    "filename": f"{track['name']} (Spotify)"
+                })
+                st.success(f" Added '{track['name']}' to your DJ set.")
+
+        # Load more
+        st.markdown("---")
+        if st.button("Load More"):
+            st.rerun()
+
+
 
 # === Footer ===
 st.markdown("""
