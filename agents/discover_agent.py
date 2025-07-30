@@ -50,7 +50,7 @@ class DiscoverAgent:
             if use_youtube_fallback and use_fallback:
                 if not track.get("preview_url"):
                     print(f"[MoodMixr] Falling back to YouTube for: {track['name']}")
-                    file_path = YouTubeFallbackAgent.download_audio(f"{track['name']} {track['artist']}")
+                    file_path, yt_url = YouTubeFallbackAgent.download_audio(query)
                 else:
                     print(f"[MoodMixr] Using Spotify preview for Librosa fallback: {track['name']}")
                     try:
@@ -66,6 +66,9 @@ class DiscoverAgent:
                 if file_path:
                     try:
                         y, sr = librosa.load(file_path, sr=None)
+                        if len(y) < sr * 10:  # less than 10 seconds
+                            raise ValueError("Audio clip too short for analysis")
+
                         bpm = round(librosa.beat.tempo(y, sr=sr)[0])
                         energy = float(np.mean(librosa.feature.rms(y=y)))
                         chroma = librosa.feature.chroma_stft(y=y, sr=sr)
@@ -79,7 +82,6 @@ class DiscoverAgent:
                     except Exception as e:
                         print(f"[Librosa Error] for {track['name']}: {e}")
 
-            # ✅ Final data
             print(f"🎯 Final: {track['name']} → BPM: {bpm}, Energy: {energy}, Mood: {mood}, Key: {key}")
             enriched.append({
                 "name": track["name"],
@@ -92,7 +94,10 @@ class DiscoverAgent:
                 "key": key,
                 "energy": energy,
                 "danceability": danceability,
-                "mood": mood
+                "mood": mood,
+                "source": "Spotify Features" if not use_fallback else "Fallback Analysis",
+                "youtube_url": yt_url,
+
             })
 
         return enriched

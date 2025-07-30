@@ -7,8 +7,12 @@
 # 🧠 Modular Agent-Based Architecture | 🎵 Pro DJ Tools | ⚛️ Future Sound Intelligence
 # Created: 2025-07-05 | Version: 0.9.0 | License: MIT + Karma Clause
 
-import sys
+# ⛩️ MoodMixr by Karmonic (Akshaykumarr Surti)
+# 🌐 AI + Human Creativity | 🎵 Modular DJ Intelligence
+# 🧠 Agent-Based Architecture | Version 0.9.5
+
 import os
+import sys
 import io
 import streamlit as st
 import librosa
@@ -16,38 +20,58 @@ import librosa.display
 import matplotlib.pyplot as plt
 import numpy as np
 import soundfile as sf
-from mutagen import File as MutagenFile
-from mutagen.flac import FLAC
-from mutagen.mp3 import MP3
 from PIL import Image
 from io import BytesIO
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from moodmixr_agent import run_moodmixr_agent
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+
 from agents.layout_agent import LayoutAgent
+from agents.audio_agent import AudioAnalyzerAgent
+from agents.mood_agent import MoodClassifierAgent as MoodAgent
+from agents.genre_classifier_agent import GenreClassifierAgent
+from agents.vocal_detector_agent import VocalDetectorAgent
+from agents.set_optimizer_agent import SetOptimizerAgent
+from agents.transition_agent import TransitionRecommenderAgent
+from agents.summary_agent import SummaryAgent
+from agents.discover_agent import DiscoverAgent
+from utils.utils import extract_album_art, extract_track_metadata, generate_plotly_energy_curve, get_mood_color
 
-# 📐 Streamlit Config
+# === Streamlit Config ===
 st.set_page_config(page_title="MoodMixr", layout="wide")
 LayoutAgent.apply_global_styles()
-
-# 🎛️ Sidebar Navigation
 st.sidebar.title("MoodMixr")
 page = st.sidebar.radio("Navigate", ["Agent Analyzer", "Set Flow Designer", "Discover & Compare"])
 
-# 📦 Core Utilities and Agents
-from utils.utils import (
-    detect_bpm_key,
-    analyze_mood,
-    calculate_energy_profile,
-    extract_album_art,
-    extract_track_metadata,
-    get_mood_color,
-    generate_plotly_energy_curve,
-)
-
-from agents.set_optimizer_agent import SetOptimizerAgent
-
+# === Central Execution ===
+def run_moodmixr_agent(track_path):
+    bpm, key = AudioAnalyzerAgent.analyze(track_path)
+    mood, energy = MoodAgent.analyze(track_path)
+    genre = GenreClassifierAgent.classify(track_path)
+    vocals, confidence = VocalDetectorAgent.detect(track_path)
+    role = SetOptimizerAgent.classify_role(bpm, energy)
+    transitions = TransitionRecommenderAgent.recommend(bpm=bpm, key=key, mood=mood, energy=energy)
+    summary = SummaryAgent.generate_summary(
+        filename=os.path.basename(track_path),
+        bpm=bpm,
+        key=key,
+        mood=mood,
+        set_role=role,
+        has_vocals=vocals
+    )
+    return {
+        "Mood": mood,
+        "Genre": genre,
+        "HasVocals": vocals,
+        "VocalConfidence": confidence,
+        "Summary": summary,
+        "BPM": bpm,
+        "Key": key,
+        "Energy": energy,
+        "SetRole": role,
+        "Suggestions": transitions
+    }
 
 # === AGENT ANALYZER TAB ===
 if page == "Agent Analyzer":
@@ -166,6 +190,12 @@ if page == "Agent Analyzer":
 
 # === SET FLOW DESIGNER TAB ===
 elif page == "Set Flow Designer":
+    from agents.audio_agent import AudioAnalyzerAgent
+    from agents.mood_agent import MoodClassifierAgent
+    from agents.genre_classifier_agent import GenreClassifierAgent
+    from agents.set_optimizer_agent import SetOptimizerAgent
+    from agents.transition_agent import TransitionRecommenderAgent
+
     LayoutAgent.page_header("Set Flow Designer")
 
     if "dj_set_queue" not in st.session_state:
@@ -184,10 +214,8 @@ elif page == "Set Flow Designer":
                     f.write(file.getbuffer())
 
                 try:
-                    y, sr = librosa.load(temp_path, sr=None)
-                    bpm, key = detect_bpm_key(y, sr)
-                    energy = calculate_energy_profile(y)
-                    mood = analyze_mood(temp_path)
+                    bpm, key = AudioAnalyzerAgent.analyze(temp_path)
+                    mood, energy = MoodClassifierAgent.analyze(temp_path)
                     mood = mood.strip().strip('"').strip(",").capitalize()
                 except Exception as e:
                     bpm, key, energy, mood = "?", "?", 0.0, "Unknown"
@@ -205,12 +233,10 @@ elif page == "Set Flow Designer":
                 }
                 st.session_state.dj_set_queue.append(track_info)
 
-        # Auto-scroll to energy graph
         st.markdown("<a href='#dj-energy' style='text-decoration:none;'>🔽 View Energy Map</a>", unsafe_allow_html=True)
 
     if st.session_state.dj_set_queue:
         st.markdown("### Current Track Queue")
-
         for i, track in enumerate(st.session_state.dj_set_queue):
             col1, col2 = st.columns([8, 1])
             with col1:
@@ -222,21 +248,16 @@ elif page == "Set Flow Designer":
                     st.session_state.dj_set_queue.pop(i)
                     st.experimental_rerun()
 
-        # === ENERGY FLOW VISUAL ===
-        st.markdown("---", unsafe_allow_html=True)
+        st.markdown("---")
         st.markdown("<h4 id='dj-energy'>Energy Flow</h4>", unsafe_allow_html=True)
         st.plotly_chart(generate_plotly_energy_curve(st.session_state.dj_set_queue), use_container_width=True)
 
-        # === TRANSITION INSIGHTS ===
-        from agents.transition_agent import TransitionRecommenderAgent
         st.markdown("---")
         st.markdown("### Transition Insights")
-
         for i, track in enumerate(st.session_state.dj_set_queue):
             with st.expander(f"{i+1}. {track['name']} by {track['artist']}"):
                 st.caption(f"BPM: {track['bpm']} | Key: {track['key']} | Mood: {track['mood']}")
                 st.audio(track["file"])
-
                 try:
                     bpm = float(track['bpm']) if isinstance(track['bpm'], (int, float)) else 120
                     energy = float(track['energy']) if isinstance(track['energy'], (int, float)) else 0.5
@@ -262,6 +283,49 @@ elif page == "Set Flow Designer":
             st.session_state.dj_set_queue = optimized_queue
             st.success("Set flow optimized!")
 
+        # === SET SUMMARY DISPLAY ===
+        st.markdown("---")
+        st.subheader("📜 Set Summary View")
+
+        for i, track in enumerate(st.session_state.dj_set_queue):
+            filename = track.get("filename", f"Track {i+1}")
+            bpm = track.get("bpm", "?")
+            key = track.get("key", "?")
+            mood = track.get("mood", "Unknown")
+            energy = track.get("energy", "?")
+            set_role = track.get("SetRole", "🎚️ Support")
+            has_vocals = track.get("HasVocals", False)
+
+            # 💡 Generate the AI-powered summary
+            ai_summary = SummaryAgent.generate_summary(filename, bpm, key, mood, set_role, has_vocals)
+
+            st.markdown(f"""
+            <div style='background-color:#111111; padding:10px 15px; border-radius:10px; margin-bottom:10px;'>
+                <h4 style='color:#00FF99;'>🎵 {i+1}. {track['name']} <span style='color:#999;'>by {track['artist']}</span></h4>
+                <p style='margin:0;'>
+                    <b>BPM:</b> {bpm} &nbsp; | &nbsp;
+                    <b>Key:</b> {key} &nbsp; | &nbsp;
+                    <b>Energy:</b> {energy} &nbsp; | &nbsp;
+                    <b>Mood:</b> {mood}
+                </p>
+                <p style='color:#AAA; font-style:italic; margin-top:10px;'>{ai_summary}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # === EXPORT OPTION ===
+        summary_text = "\n".join([
+            SummaryAgent.generate_summary(
+                t.get("filename", f"Track {i+1}"),
+                t.get("bpm", "?"),
+                t.get("key", "?"),
+                t.get("mood", "Unknown"),
+                t.get("SetRole", "🎚️ Support"),
+                t.get("HasVocals", False)
+            ) for i, t in enumerate(st.session_state.dj_set_queue)
+        ])
+
+        st.download_button("📥 Export Set Summary (TXT)", summary_text, file_name="moodmixr_dj_set_summary.txt")
+
         # === EXPORT TO JSON ===
         import json
         export_data = [
@@ -280,13 +344,14 @@ elif page == "Set Flow Designer":
 
     else:
         st.info("Upload some tracks to begin building your set.")
+
 # === DISCOVER & COMPARE TAB ===
 
 elif page == "Discover & Compare":
     from moodmixr_agent import run_discover_agent
 
     LayoutAgent.page_header("Discover & Compare")
-    st.subheader("🎧 Discover Tracks on Spotify")
+    st.subheader(" Discover Tracks on Spotify")
 
     query = st.text_input("Search Spotify", placeholder="Try 'Sunset Lover', 'Fred Again..', etc.")
     use_youtube_fallback = st.sidebar.checkbox("🎵 Use YouTube fallback if Spotify preview fails", value=True)
@@ -346,7 +411,9 @@ elif page == "Discover & Compare":
                     f"<span style='color: #CCCCCC'>BPM:</span> <b>{track['bpm']}</b> &nbsp; "
                     f"<span style='color: #CCCCCC'>Key:</span> <b>{track['key']}</b> &nbsp; "
                     f"<span style='color: #CCCCCC'>Energy:</span> <b>{track['energy']}</b> &nbsp; "
-                    f"<span style='color: #CCCCCC'>Mood:</span> <b>{track['mood']}</b>",
+                    f"<span style='color: #CCCCCC'>Mood:</span> <b>{track['mood']}</b><br> "
+                    f"<span style='color: #888888; font-size: 11px;'>(via {track.get('source', 'Unknown')})</span>",
+
                     unsafe_allow_html=True
                 )
                 if track.get("preview_url"):
