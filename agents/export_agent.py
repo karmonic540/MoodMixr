@@ -6,8 +6,8 @@
 import json
 import os
 
-class ExportAgent:
 
+class ExportAgent:
     @staticmethod
     def export_metadata(track_path, bpm, key, mood, energy, transitions):
         try:
@@ -24,9 +24,10 @@ class ExportAgent:
                 "Key": str(key) if key is not None else "Unknown",
                 "Mood": str(mood) if mood is not None else "Unknown",
                 "Energy": float(energy) if energy is not None else 0.0,
-                "TransitionSuggestions": [str(s) for s in transitions] if transitions else []
+                "TransitionSuggestions": [str(s) for s in transitions]
+                if transitions
+                else [],
             }
-
 
             full_path = os.path.join(export_path, export_name)
             with open(full_path, "w") as f:

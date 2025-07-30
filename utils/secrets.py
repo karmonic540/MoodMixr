@@ -4,6 +4,7 @@
 # Created: 2025-07-05 | Version: 0.9.0 | License: MIT + Karma Clause
 import streamlit as st
 
+
 def get_secret(key, default=None):
     try:
         return st.secrets[key]

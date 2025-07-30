@@ -15,6 +15,7 @@ import streamlit as st
 
 co = cohere.Client(st.secrets["COHERE_API_KEY"])
 
+
 class SummaryAgent:
     """
     Krishna smiles through this summary — may it charm every set with elegance.
@@ -35,11 +36,7 @@ class SummaryAgent:
         )
 
         try:
-            response = co.generate(
-                prompt=prompt,
-                max_tokens=60,
-                temperature=0.7
-            )
+            response = co.generate(prompt=prompt, max_tokens=60, temperature=0.7)
             summary = response.generations[0].text.strip()
             return summary
 
@@ -49,6 +46,5 @@ class SummaryAgent:
             return f"{filename} | BPM: {bpm} | Key: {key} | Mood: {mood} | Role: {set_role} | Vocals: {'Yes' if has_vocals else 'No'}"
 
 
-    
 # 🕉️ "This function embodies Saraswati’s clarity — only pure logic shall pass."
 # 🌀 “Lord Shiva guides this transformation engine.”

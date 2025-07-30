@@ -6,6 +6,7 @@ import tempfile
 from yt_dlp import YoutubeDL
 from youtube_search import YoutubeSearch
 
+
 class YouTubeFallbackAgent:
     @staticmethod
     def download_audio(query: str) -> tuple[str, str] | tuple[None, None]:
@@ -31,14 +32,16 @@ class YouTubeFallbackAgent:
 
             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
             ydl_opts = {
-                'format': 'bestaudio/best',
-                'outtmpl': temp_file.name,
-                'quiet': True,
-                'postprocessors': [{
-                    'key': 'FFmpegExtractAudio',
-                    'preferredcodec': 'mp3',
-                    'preferredquality': '128',
-                }],
+                "format": "bestaudio/best",
+                "outtmpl": temp_file.name,
+                "quiet": True,
+                "postprocessors": [
+                    {
+                        "key": "FFmpegExtractAudio",
+                        "preferredcodec": "mp3",
+                        "preferredquality": "128",
+                    }
+                ],
             }
 
             with YoutubeDL(ydl_opts) as ydl:

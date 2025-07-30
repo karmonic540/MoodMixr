@@ -5,6 +5,7 @@
 
 import hashlib
 
+
 class SignatureAgent:
     """
     🔐 Let this code embed Karmonic's presence in every waveform.

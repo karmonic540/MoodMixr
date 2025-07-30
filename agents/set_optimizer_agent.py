@@ -7,6 +7,7 @@ from utils.constants import MOODMIXR_SIGNATURE
 
 from utils.constants import MOODMIXR_SIGNATURE
 
+
 class SetOptimizerAgent:
     """🔥 Shiva dances through this logic — transitions become divine transformations."""
 
@@ -33,9 +34,12 @@ class SetOptimizerAgent:
     def optimize_dj_set(track_queue):
         try:
             valid_tracks = [
-                t for t in track_queue 
-                if isinstance(t.get("bpm"), (int, float)) and isinstance(t.get("mood"), str)
+                t
+                for t in track_queue
+                if isinstance(t.get("bpm"), (int, float))
+                and isinstance(t.get("mood"), str)
             ]
+
             def track_score(track):
                 base_score = track["bpm"]
                 mood_score = sum([ord(c) for c in track["mood"].lower()[:3]])
@@ -47,6 +51,7 @@ class SetOptimizerAgent:
         except Exception as e:
             print(f"[SetOptimizerAgent] Optimization Error: {e}")
             return track_queue
-        
+
+
 # 🕉️ "This function embodies Saraswati’s clarity — only pure logic shall pass."
 # 🌀 “Lord Shiva guides this transformation engine.”

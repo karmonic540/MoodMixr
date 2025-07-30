@@ -5,6 +5,7 @@
 import requests
 import streamlit as st
 
+
 class SpotifyApiAgent:
     def __init__(self):
         self.client_id = st.secrets["SPOTIFY_CLIENT_ID"]
@@ -13,24 +14,18 @@ class SpotifyApiAgent:
 
     def _get_token(self):
         auth_url = "https://accounts.spotify.com/api/token"
-        auth_data = {
-            "grant_type": "client_credentials"
-        }
+        auth_data = {"grant_type": "client_credentials"}
         auth_response = requests.post(
-            auth_url,
-            data=auth_data,
-            auth=(self.client_id, self.client_secret)
+            auth_url, data=auth_data, auth=(self.client_id, self.client_secret)
         )
         return auth_response.json().get("access_token")
 
     def search(self, query, types="track", limit=5):
         headers = {"Authorization": f"Bearer {self.token}"}
-        params = {
-            "q": query,
-            "type": types,
-            "limit": limit
-        }
-        res = requests.get("https://api.spotify.com/v1/search", headers=headers, params=params)
+        params = {"q": query, "type": types, "limit": limit}
+        res = requests.get(
+            "https://api.spotify.com/v1/search", headers=headers, params=params
+        )
         return res.json()
 
     def get_audio_features(self, track_id):

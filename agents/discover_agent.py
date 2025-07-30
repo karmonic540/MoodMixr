@@ -11,12 +11,13 @@ import os
 from utils.utils import search_spotify_track, get_spotify_audio_features
 from agents.youtube_fallback_agent import YouTubeFallbackAgent
 
+
 class DiscoverAgent:
     @staticmethod
     def fetch_tracks(query, start=0, limit=5, use_youtube_fallback=True):
         enriched = []
         results = search_spotify_track(query)
-        sliced_results = results[start:start + limit]
+        sliced_results = results[start : start + limit]
 
         for track in sliced_results:
             bpm = 0
@@ -36,9 +37,11 @@ class DiscoverAgent:
                     energy = round(features.get("energy", 0.0), 2)
                     danceability = round(features.get("danceability", 0.0), 2)
                     mood = (
-                        "Energetic" if energy > 0.6 else
-                        "Chill" if energy < 0.3 else
-                        "Groovy"
+                        "Energetic"
+                        if energy > 0.6
+                        else "Chill"
+                        if energy < 0.3
+                        else "Groovy"
                     )
                 except Exception as e:
                     print(f"[Spotify Audio Feature Error] {e}")
@@ -52,9 +55,13 @@ class DiscoverAgent:
                     print(f"[MoodMixr] Falling back to YouTube for: {track['name']}")
                     file_path, yt_url = YouTubeFallbackAgent.download_audio(query)
                 else:
-                    print(f"[MoodMixr] Using Spotify preview for Librosa fallback: {track['name']}")
+                    print(
+                        f"[MoodMixr] Using Spotify preview for Librosa fallback: {track['name']}"
+                    )
                     try:
-                        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp:
+                        with tempfile.NamedTemporaryFile(
+                            delete=False, suffix=".mp3"
+                        ) as tmp:
                             audio_data = requests.get(track["preview_url"]).content
                             tmp.write(audio_data)
                             file_path = tmp.name
@@ -73,31 +80,51 @@ class DiscoverAgent:
                         energy = float(np.mean(librosa.feature.rms(y=y)))
                         chroma = librosa.feature.chroma_stft(y=y, sr=sr)
                         key_index = np.argmax(np.mean(chroma, axis=1))
-                        key = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"][key_index]
+                        key = [
+                            "C",
+                            "C#",
+                            "D",
+                            "D#",
+                            "E",
+                            "F",
+                            "F#",
+                            "G",
+                            "G#",
+                            "A",
+                            "A#",
+                            "B",
+                        ][key_index]
                         mood = (
-                            "Energetic" if energy > 0.6 else
-                            "Chill" if energy < 0.3 else
-                            "Groovy"
+                            "Energetic"
+                            if energy > 0.6
+                            else "Chill"
+                            if energy < 0.3
+                            else "Groovy"
                         )
                     except Exception as e:
                         print(f"[Librosa Error] for {track['name']}: {e}")
 
-            print(f"🎯 Final: {track['name']} → BPM: {bpm}, Energy: {energy}, Mood: {mood}, Key: {key}")
-            enriched.append({
-                "name": track["name"],
-                "artist": track["artist"],
-                "album": track["album"],
-                "image": track["image"],
-                "preview_url": track.get("preview_url"),
-                "id": track["id"],
-                "bpm": bpm,
-                "key": key,
-                "energy": energy,
-                "danceability": danceability,
-                "mood": mood,
-                "source": "Spotify Features" if not use_fallback else "Fallback Analysis",
-                "youtube_url": yt_url,
-
-            })
+            print(
+                f"🎯 Final: {track['name']} → BPM: {bpm}, Energy: {energy}, Mood: {mood}, Key: {key}"
+            )
+            enriched.append(
+                {
+                    "name": track["name"],
+                    "artist": track["artist"],
+                    "album": track["album"],
+                    "image": track["image"],
+                    "preview_url": track.get("preview_url"),
+                    "id": track["id"],
+                    "bpm": bpm,
+                    "key": key,
+                    "energy": energy,
+                    "danceability": danceability,
+                    "mood": mood,
+                    "source": "Spotify Features"
+                    if not use_fallback
+                    else "Fallback Analysis",
+                    "youtube_url": yt_url,
+                }
+            )
 
         return enriched

@@ -14,6 +14,7 @@ import plotly.graph_objects as go
 import streamlit as st
 import cohere
 
+
 # Unified secret access
 def get_secret(key):
     """
@@ -26,6 +27,7 @@ def get_secret(key):
         str: The secret value, or None if not found.
     """
     return st.secrets.get(key) or os.getenv(key)
+
 
 # BPM and Key Detection
 def detect_bpm_key(y, sr):
@@ -41,8 +43,11 @@ def detect_bpm_key(y, sr):
     """
     tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
     chroma = librosa.feature.chroma_stft(y=y, sr=sr)
-    key = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'][np.argmax(np.mean(chroma, axis=1)) % 12]
+    key = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"][
+        np.argmax(np.mean(chroma, axis=1)) % 12
+    ]
     return int(tempo), key
+
 
 # Mood Analysis via Cohere
 def analyze_mood(audio_path):
@@ -58,10 +63,11 @@ def analyze_mood(audio_path):
     try:
         co = cohere.Client(get_secret("COHERE_API_KEY"))
         prompt = f"Analyze the mood of this audio track based on its name: {os.path.basename(audio_path)}"
-        response = co.generate(model='command-light', prompt=prompt, max_tokens=20)
+        response = co.generate(model="command-light", prompt=prompt, max_tokens=20)
         return response.generations[0].text.strip()
     except Exception:
         return "Unknown / Neutral"
+
 
 # Energy Calculation
 def calculate_energy_profile(y):
@@ -76,6 +82,7 @@ def calculate_energy_profile(y):
     """
     return float(np.mean(librosa.feature.rms(y=y)[0])) * 1000
 
+
 # Mood Color Map
 def get_mood_color(mood):
     """
@@ -89,9 +96,16 @@ def get_mood_color(mood):
     """
     mood = mood.lower()
     return {
-        "happy": "#FF9900", "uplifting": "#FF9900", "calm": "#00CCFF", "chill": "#00CCFF",
-        "dark": "#9900FF", "emotional": "#9900FF", "energetic": "#FF0033", "hype": "#FF0033"
+        "happy": "#FF9900",
+        "uplifting": "#FF9900",
+        "calm": "#00CCFF",
+        "chill": "#00CCFF",
+        "dark": "#9900FF",
+        "emotional": "#9900FF",
+        "energetic": "#FF0033",
+        "hype": "#FF0033",
     }.get(mood.split()[0], "#00FF99")
+
 
 # BPM to Animation Speed
 def get_bpm_animation_speed(bpm):
@@ -104,7 +118,10 @@ def get_bpm_animation_speed(bpm):
     Returns:
         str: CSS animation speed.
     """
-    return "1.2s" if bpm < 80 else "1s" if bpm < 100 else "0.8s" if bpm < 120 else "0.6s"
+    return (
+        "1.2s" if bpm < 80 else "1s" if bpm < 100 else "0.8s" if bpm < 120 else "0.6s"
+    )
+
 
 # Classify DJ Set Role
 def classify_set_role(bpm, energy, mood):
@@ -130,6 +147,7 @@ def classify_set_role(bpm, energy, mood):
         return "🎉 Closer"
     return "🎚️ Support"
 
+
 # Suggest DJ Transitions
 def suggest_best_transitions(track_data):
     """
@@ -141,23 +159,38 @@ def suggest_best_transitions(track_data):
     Returns:
         list: List of suggested transitions with details.
     """
+
     def score(a, b):
-        s = 100 - abs(a['bpm'] - b['bpm'])
-        if a['key'] == b['key']: s += 15
-        if a['mood'].split()[0].lower() in b['mood'].lower(): s += 10
+        s = 100 - abs(a["bpm"] - b["bpm"])
+        if a["key"] == b["key"]:
+            s += 15
+        if a["mood"].split()[0].lower() in b["mood"].lower():
+            s += 10
         return s
 
     results = []
     for i, track in enumerate(track_data):
         best = max(
             (b for j, b in enumerate(track_data) if i != j),
-            key=lambda b: score(track, b)
+            key=lambda b: score(track, b),
         )
         reason = f"Close BPM ({track['bpm']}→{best['bpm']}), "
-        reason += "Key match ✅, " if track['key'] == best['key'] else ""
-        reason += "Similar mood 🎭" if track['mood'].split()[0].lower() in best['mood'].lower() else "Mood contrast"
-        results.append({"from": track['filename'], "to": best['filename'], "score": score(track, best), "reason": reason})
+        reason += "Key match ✅, " if track["key"] == best["key"] else ""
+        reason += (
+            "Similar mood 🎭"
+            if track["mood"].split()[0].lower() in best["mood"].lower()
+            else "Mood contrast"
+        )
+        results.append(
+            {
+                "from": track["filename"],
+                "to": best["filename"],
+                "score": score(track, best),
+                "reason": reason,
+            }
+        )
     return results
+
 
 # Plotly Energy Curve
 def generate_plotly_energy_curve(tracks):
@@ -176,15 +209,34 @@ def generate_plotly_energy_curve(tracks):
     colors = [get_mood_color(mood) for mood in moods]
 
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=list(range(len(labels))), y=energies, mode='lines+markers',
-                             marker=dict(size=12, color=colors), line=dict(color='white'),
-                             text=labels, hoverinfo='text+y'))
+    fig.add_trace(
+        go.Scatter(
+            x=list(range(len(labels))),
+            y=energies,
+            mode="lines+markers",
+            marker=dict(size=12, color=colors),
+            line=dict(color="white"),
+            text=labels,
+            hoverinfo="text+y",
+        )
+    )
     for i, label in enumerate(labels):
-        fig.add_annotation(x=i, y=energies[i]+5, text=label[:20] + "...", showarrow=False,
-                           font=dict(color=colors[i], size=12))
-    fig.update_layout(title="🎚️ DJ Set Energy Flow", template="plotly_dark", height=400,
-                      xaxis=dict(showticklabels=False), yaxis_title="Energy")
+        fig.add_annotation(
+            x=i,
+            y=energies[i] + 5,
+            text=label[:20] + "...",
+            showarrow=False,
+            font=dict(color=colors[i], size=12),
+        )
+    fig.update_layout(
+        title="🎚️ DJ Set Energy Flow",
+        template="plotly_dark",
+        height=400,
+        xaxis=dict(showticklabels=False),
+        yaxis_title="Energy",
+    )
     return fig
+
 
 # Waveform Generation
 def generate_emotion_waveform(y, sr, mood="neutral", track_name=""):
@@ -205,25 +257,44 @@ def generate_emotion_waveform(y, sr, mood="neutral", track_name=""):
         "calm": "skyblue",
         "dark": "purple",
         "energetic": "crimson",
-        "neutral": "#00FF99"
+        "neutral": "#00FF99",
     }
     mood_key = next((k for k in mood_color_map if k in mood.lower()), "neutral")
     color = mood_color_map[mood_key]
 
-    fig, ax = plt.subplots(figsize=(10, 3), facecolor='#0D0D0D')
-    ax.set_facecolor('#0D0D0D')
+    fig, ax = plt.subplots(figsize=(10, 3), facecolor="#0D0D0D")
+    ax.set_facecolor("#0D0D0D")
     librosa.display.waveshow(y, sr=sr, ax=ax, color=color, alpha=0.9)
-    ax.set_title("🎧 Audio Waveform (Emotion-Based)", color='white', fontsize=12, loc='left')
-    ax.text(1.0, 1.0, f"🎵 {track_name}", ha='right', va='top',
-            transform=ax.transAxes, fontsize=10, color="#AAAAAA")
-    ax.text(0, 1.0, f"🎨 Emotion Color: {color}", ha='left', va='top',
-            transform=ax.transAxes, fontsize=9, color=color)
+    ax.set_title(
+        "🎧 Audio Waveform (Emotion-Based)", color="white", fontsize=12, loc="left"
+    )
+    ax.text(
+        1.0,
+        1.0,
+        f"🎵 {track_name}",
+        ha="right",
+        va="top",
+        transform=ax.transAxes,
+        fontsize=10,
+        color="#AAAAAA",
+    )
+    ax.text(
+        0,
+        1.0,
+        f"🎨 Emotion Color: {color}",
+        ha="left",
+        va="top",
+        transform=ax.transAxes,
+        fontsize=9,
+        color=color,
+    )
     ax.set_xticks([])
     ax.set_yticks([])
     for spine in ax.spines.values():
         spine.set_visible(False)
     plt.tight_layout()
     return fig
+
 
 # YouTube Search
 def search_youtube_videos(query, max_results=5, api_key=None):
@@ -248,22 +319,26 @@ def search_youtube_videos(query, max_results=5, api_key=None):
         "type": "video",
         "videoEmbeddable": "true",
         "maxResults": max_results,
-        "key": api_key
+        "key": api_key,
     }
 
     try:
         response = requests.get(url, params=params)
         response.raise_for_status()
         items = response.json().get("items", [])
-        return [{
-            "videoId": i["id"]["videoId"],
-            "title": i["snippet"]["title"],
-            "channel": i["snippet"]["channelTitle"],
-            "thumbnail": i["snippet"]["thumbnails"]["high"]["url"]
-        } for i in items]
+        return [
+            {
+                "videoId": i["id"]["videoId"],
+                "title": i["snippet"]["title"],
+                "channel": i["snippet"]["channelTitle"],
+                "thumbnail": i["snippet"]["thumbnails"]["high"]["url"],
+            }
+            for i in items
+        ]
     except requests.exceptions.RequestException as e:
         st.error(f"YouTube API Error: {e}")
         return []
+
 
 def get_youtube_video_details(video_id, api_key=None):
     """
@@ -291,11 +366,13 @@ def get_youtube_video_details(video_id, api_key=None):
             "channel": item["snippet"].get("channelTitle"),
             "thumbnail": item["snippet"]["thumbnails"]["high"]["url"],
             "published": item["snippet"].get("publishedAt"),
-            "duration": item["contentDetails"]["duration"]
+            "duration": item["contentDetails"]["duration"],
         }
     return None
 
+
 # Ensure YouTube audio analysis works correctly
+
 
 def analyze_youtube_track(video_url, title="Track"):
     from pytube import YouTube
@@ -306,7 +383,9 @@ def analyze_youtube_track(video_url, title="Track"):
         stream = yt.streams.filter(only_audio=True).first()
         if stream is None:
             raise ValueError("No downloadable stream found.")
-        path = stream.download(output_path="app/audio", filename=f"{title.replace(' ', '_')}_temp.mp3")
+        path = stream.download(
+            output_path="app/audio", filename=f"{title.replace(' ', '_')}_temp.mp3"
+        )
 
         y, sr = librosa.load(path, sr=None)
         bpm, key = detect_bpm_key(y, sr)
@@ -314,12 +393,6 @@ def analyze_youtube_track(video_url, title="Track"):
         energy = calculate_energy_profile(y)
         fig = generate_emotion_waveform(y, sr, mood, title)
 
-        return {
-            "bpm": bpm,
-            "key": key,
-            "energy": energy,
-            "mood": mood,
-            "fig": fig
-        }
+        return {"bpm": bpm, "key": key, "energy": energy, "mood": mood, "fig": fig}
     except Exception as e:
         return {"error": str(e)}

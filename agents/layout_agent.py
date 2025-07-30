@@ -7,11 +7,12 @@
 
 import streamlit as st
 
-class LayoutAgent:
 
+class LayoutAgent:
     @staticmethod
     def apply_global_styles():
-        st.markdown("""
+        st.markdown(
+            """
         <style>
             html, body, [class*="css"] {
                 font-family: 'Poppins', sans-serif;
@@ -40,7 +41,9 @@ class LayoutAgent:
                 box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
             }
         </style>
-        """, unsafe_allow_html=True)
+        """,
+            unsafe_allow_html=True,
+        )
 
     @staticmethod
     def page_header(title):
@@ -53,6 +56,5 @@ class LayoutAgent:
                 {title}
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
-
