@@ -33,47 +33,53 @@ footer {
 )
 
 # ------------------------- Branding -------------------------
-st.markdown('<div class="big-title"> MoodMixr</div>', unsafe_allow_html=True)
+st.markdown('<div class="big-title">MoodMixr</div>', unsafe_allow_html=True)
 st.markdown(
-    '<div class="sub-title">AI-Powered DJ Set Intelligence | Built by Karmonic</div>',
+    '<div class="sub-title">Human Creativity meets Intelligent Audio Agents — built for the next generation of DJs.</div>',
     unsafe_allow_html=True,
 )
 st.markdown("---")
 
 # ------------------------- Vision -------------------------
 st.markdown(
-    '<div class="section-header"> What is MoodMixr?</div>', unsafe_allow_html=True
+    '<div class="section-header">What is MoodMixr?</div>', unsafe_allow_html=True
 )
 st.markdown(
     """
-MoodMixr is the future of DJing — a fusion of human creativity and intelligent agents.
-Powered by AI, it helps DJs analyze emotion, mood, transitions, energy, and crowd dynamics
-to design unforgettable sets. Whether you're on stage or in your studio, MoodMixr elevates your musical intuition.
+MoodMixr is a modular AI-powered ecosystem designed to help DJs and producers create unforgettable sets with clarity, confidence, and emotion.  
+Each audio agent performs a specific task — from mood detection to BPM, key, transition roles, energy flow, and vocal presence — running locally in Dockerized containers.  
+The platform supports professional audio formats (FLAC, WAV, MP3), ensuring true fidelity and privacy-first execution.
+
+You upload.  
+Agents analyze.  
+You build the future of sound.
 """
 )
 
 # ------------------------- Features -------------------------
-st.markdown('<div class="section-header"> Key Features</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header">Key Features</div>', unsafe_allow_html=True)
 col1, col2 = st.columns(2)
 with col1:
     st.markdown(
         """<div class="feature-box">
-    🎵 Mood Detection & Emotional Summary<br>
-    🎚️ BPM / Key / Energy Curve Extraction<br>
-    🎧 Transition Suggestions & Set Optimization<br>
-    📈 Visual Energy Flow Mapping
-    </div>""",
+🧠 AI Intelligence Stack<br>
+- Mood Detection (emotional profile)<br>
+- Audio Analysis (BPM, Key, Energy, Silence)<br>
+- Agent-Based Architecture (Docker + FastAPI)<br>
+- Local Execution (No cloud dependency)<br>
+</div>""",
         unsafe_allow_html=True,
     )
 
 with col2:
     st.markdown(
         """<div class="feature-box">
-    🔼 Upload Tracks or Use Spotify/YT Fallback<br>
-    💾 Export Set Summary (TXT / JSON)<br>
-    🧠 Modular Agent Architecture (Extensible)<br>
-    🔒 Privacy-first, locally executable (WAV, FLAC, MP3)
-    </div>""",
+🎧 Pro DJ Tools<br>
+- Upload FLAC/WAV/MP3 with waveform visuals<br>
+- Spotify + YouTube fallback support<br>
+- JSON/Crate export for Serato/Rekordbox<br>
+- Set optimization with transition suggestions<br>
+</div>""",
         unsafe_allow_html=True,
     )
 
@@ -94,7 +100,7 @@ if os.path.exists(screenshot_folder):
     )
     if screenshots:
         for img_path in screenshots:
-            st.image(Image.open(img_path), use_column_width=True)
+            st.image(Image.open(img_path), use_container_width=True)
     else:
         st.warning("No screenshots found in the screenshots folder.")
 else:
@@ -125,15 +131,15 @@ st.markdown(
 )
 
 # ------------------------- Next Steps -------------------------
-st.markdown('<div class="section-header"> Next Steps</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header">Next Steps</div>', unsafe_allow_html=True)
 st.markdown(
     """
-- 🚧 Fix Spotify Preview / YouTube fallback metadata extraction  
-- 🧠 Expand Mood Agent to analyze emotion + cultural cues  
-- 🧬 Implement `signature_agent` for watermarking unique DNA  
-- 🎛️ Add multi-track waveform visualizations  
-- 💼 Prepare full MoodMixr Alpha bundle with export-ready crates  
-- 🌐 Launch landing + private beta signup via Reddit & Discord  
+- Add Genre Detection Agent (audio-based and model-based)
+- Orchestrate agent workflows via n8n
+- Build Export Agent for Rekordbox & Serato crates
+- Build the VST plugin bridge for DAWs
+- Launch Public Beta Landing Page with shareable insights
+- Continue to share our progress on LinkedIn, Product Hunt, and Reddit
 """
 )
 
