@@ -11,3 +11,8 @@ plotly
 pytube
 yt-dlp
 youtube-search
+fastapi
+uvicorn
+librosa
+soundfile
+numpy
