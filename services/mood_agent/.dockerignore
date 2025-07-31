@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.env
+.vscode/
+audio/
+*.mp3
+*.wav
+*.flac
+uploads/
+node_modules/
+.idea/
+.DS_Store

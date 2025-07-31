@@ -28,7 +28,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 from agents.layout_agent import LayoutAgent
-from agents.audio_agent import AudioAnalyzerAgent
 from agents.mood_agent import MoodClassifierAgent as MoodAgent
 from agents.genre_classifier_agent import GenreClassifierAgent
 from agents.vocal_detector_agent import VocalDetectorAgent
@@ -36,6 +35,7 @@ from agents.set_optimizer_agent import SetOptimizerAgent
 from agents.transition_agent import TransitionRecommenderAgent
 from agents.summary_agent import SummaryAgent
 from agents.discover_agent import DiscoverAgent
+from utils.api_client import call_mood_agent_api, call_audio_agent_api
 from utils.utils import (
     extract_album_art,
     extract_track_metadata,
@@ -54,8 +54,12 @@ page = st.sidebar.radio(
 
 # === Central Execution ===
 def run_moodmixr_agent(track_path):
-    bpm, key = AudioAnalyzerAgent.analyze(track_path)
-    mood, energy = MoodAgent.analyze(track_path)
+    audio_result = call_audio_agent_api(track_path)
+    bpm = audio_result.get("bpm", 120)
+    key = audio_result.get("key", "C")
+    mood_result = call_mood_agent_api(track_path)
+    mood = mood_result.get("mood", "Unknown")
+    energy = mood_result.get("energy", 0.0)
     genre = GenreClassifierAgent.classify(track_path)
     vocals, confidence = VocalDetectorAgent.detect(track_path)
     role = SetOptimizerAgent.classify_role(bpm, energy)
