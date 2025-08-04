@@ -13,7 +13,6 @@ from agents.set_optimizer_agent import SetOptimizerAgent
 from agents.summary_agent import SummaryAgent
 from agents.transition_agent import TransitionRecommenderAgent
 from agents.spotify_api_agent import SpotifyApiAgent
-from agents.audio_agent import AudioAnalyzerAgent
 from agents.discover_agent import DiscoverAgent
 
 
