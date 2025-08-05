@@ -53,19 +53,34 @@ page = st.sidebar.radio(
 
 
 # === Central Execution ===
+# === Central Execution ===
 def run_moodmixr_agent(track_path):
+    # 🔁 Call Audio Agent via Docker
     audio_result = call_audio_agent_api(track_path)
-    bpm = audio_result.get("bpm", 120)
-    key = audio_result.get("key", "C")
+    if not audio_result or "bpm" not in audio_result or "key" not in audio_result:
+        st.error("❌ Audio Agent failed to return BPM or Key.")
+        st.stop()
+
+    bpm = audio_result["bpm"]
+    key = audio_result["key"]
+
+    # 🔁 Call Mood Agent via Docker
     mood_result = call_mood_agent_api(track_path)
-    mood = mood_result.get("mood", "Unknown")
-    energy = mood_result.get("energy", 0.0)
+    if not mood_result or "mood" not in mood_result or "energy" not in mood_result:
+        st.error("❌ Mood Agent failed to return Mood or Energy.")
+        st.stop()
+
+    mood = mood_result["mood"]
+    energy = mood_result["energy"]
+
+    # 🧠 Use other local agents
     genre = GenreClassifierAgent.classify(track_path)
     vocals, confidence = VocalDetectorAgent.detect(track_path)
     role = SetOptimizerAgent.classify_role(bpm, energy)
     transitions = TransitionRecommenderAgent.recommend(
         bpm=bpm, key=key, mood=mood, energy=energy
     )
+
     summary = SummaryAgent.generate_summary(
         filename=os.path.basename(track_path),
         bpm=bpm,
@@ -74,6 +89,7 @@ def run_moodmixr_agent(track_path):
         set_role=role,
         has_vocals=vocals,
     )
+
     return {
         "Mood": mood,
         "Genre": genre,

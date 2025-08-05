@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  audio_agent:
+    build: ./services/audio_agent
+    container_name: audio_agent
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services/audio_agent:/app
+
+  mood_agent:
+    build: ./services/mood_agent
+    container_name: mood_agent
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./services/mood_agent:/app
