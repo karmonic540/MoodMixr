@@ -1,21 +1,20 @@
-# services/audio_agent/Dockerfile
+FROM python:3.11-slim
 
-FROM python:3.10-slim
+# System libs for librosa/soundfile
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg libsndfile1 && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
 WORKDIR /app
 
-# Copy only requirements first for better caching
-COPY requirements.txt .
+# Install deps
+RUN pip install --no-cache-dir fastapi uvicorn librosa numpy soundfile python-multipart
 
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the code
-COPY . .
+# Copy in just this service (or rely on a bind mount during dev)
+COPY . /app
 
-# Expose port
+# Make sure Python can import "services.*"
+ENV PYTHONPATH=/app/..
+
 EXPOSE 8000
-
-# Run FastAPI app
-CMD ["uvicorn", "audio_agent_fastapi:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "services.audio_agent.audio_agent_fastapi:app", "--host", "0.0.0.0", "--port", "8000"]

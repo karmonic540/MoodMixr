@@ -1,0 +1,6 @@
+2025-08-15T00:54:56.413234	Armin van Buuren - Waiting For The Night.flac	used_fallback=True	bpm=129.19921875	key=F#
+2025-08-15T00:54:56.415490	Hardwell - Mad World.flac	used_fallback=True	bpm=129.19921875	key=F
+2025-08-15T00:54:56.417157	Kygo - Stole the Show.flac	used_fallback=True	bpm=99.38401442307692	key=G#
+2025-08-15T00:59:11.737504	Armin van Buuren - Waiting For The Night.flac	used_fallback=True	bpm=129.19921875	key=F#
+2025-08-15T00:59:11.740182	Hardwell - Mad World.flac	used_fallback=True	bpm=129.19921875	key=F
+2025-08-15T00:59:11.742768	Kygo - Stole the Show.flac	used_fallback=True	bpm=99.38401442307692	key=G#

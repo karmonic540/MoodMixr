@@ -1,0 +1,20 @@
+{
+  "filename": "Armin van Buuren - Waiting For The Night.flac",
+  "used_fallback": true,
+  "merged": {
+    "filename": "tmpw3lxkjvw.wav",
+    "bpm": 129.0,
+    "duration_sec": 262,
+    "energy": 0.243,
+    "mood": "Energetic",
+    "key": null
+  },
+  "track_info": {
+    "name": "Waiting For The Night",
+    "artist": "Armin van Buuren",
+    "bpm": 129.19921875,
+    "key": "F#",
+    "mood": "Energetic",
+    "energy": 0.24
+  }
+}

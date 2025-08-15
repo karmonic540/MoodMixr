@@ -1,18 +1,47 @@
-version: "3.9"
-
 services:
   audio_agent:
     build: ./services/audio_agent
-    container_name: audio_agent
+    container_name: moodmixr_audio
+    working_dir: /app
+    environment:
+      - PYTHONUNBUFFERED=1
     ports:
       - "8000:8000"
     volumes:
-      - ./services/audio_agent:/app
+      - ./services:/services     # optional: if you want the whole tree
+      - ./services/audio_agent:/app  # app lives here
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 10s
+      timeout: 2s
+      retries: 10
 
   mood_agent:
     build: ./services/mood_agent
-    container_name: mood_agent
+    container_name: moodmixr_mood
+    working_dir: /app
+    environment:
+      - PYTHONUNBUFFERED=1
     ports:
       - "8001:8001"
     volumes:
+      - ./services:/services
       - ./services/mood_agent:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/docs"]
+      interval: 10s
+      timeout: 2s
+      retries: 10
+
+  app:
+    build: .
+    container_name: moodmixr_app
+    depends_on:
+      - audio_agent
+      - mood_agent
+    ports:
+      - "8501:8501"
+    environment:
+      # tell the UI where to reach agents
+      - AUDIO_AGENT_URL=http://audio_agent:8000
+      - MOOD_AGENT_URL=http://mood_agent:8001

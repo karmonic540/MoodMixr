@@ -13,6 +13,17 @@ def analyze_mood_energy(file_path):
         tempo, _ = librosa.beat.beat_track(y=audio_data, sr=sr)
         tempo = float(tempo)  # ✅ Cast to float
 
+        print(f"Analyzing mood and energy for file: {file_path}")
+        print(f"Audio data shape: {audio_data.shape}, Sample rate: {sr}")
+
+        if not tempo:
+            print("Failed to calculate BPM. Defaulting to 0.")
+            tempo = 0.0
+
+        if not rms:
+            print("Failed to calculate RMS energy. Defaulting to 0.")
+            rms = 0.0
+
         mood = "Energetic" if tempo > 120 and rms > 0.04 else "Calm"
         energy = round(rms * 100, 2)
 
@@ -23,6 +34,6 @@ def analyze_mood_energy(file_path):
             "mood": mood,
         }
 
-    except Exception as e:
+    except (ValueError, FileNotFoundError) as e:
         print(f"🔥 Librosa failed: {str(e)}")
         return {"error": f"Librosa failed: {str(e)}"}

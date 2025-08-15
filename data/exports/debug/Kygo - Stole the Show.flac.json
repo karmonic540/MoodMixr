@@ -1,0 +1,20 @@
+{
+  "filename": "Kygo - Stole the Show.flac",
+  "used_fallback": true,
+  "merged": {
+    "filename": "tmpsz0iayo5.wav",
+    "bpm": 99.0,
+    "duration_sec": 223,
+    "energy": 0.206,
+    "mood": "Calm",
+    "key": null
+  },
+  "track_info": {
+    "name": "Stole the Show",
+    "artist": "Kygo",
+    "bpm": 99.38401442307692,
+    "key": "G#",
+    "mood": "Calm",
+    "energy": 0.21
+  }
+}

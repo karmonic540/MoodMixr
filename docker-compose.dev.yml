@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  audio_agent:
+    volumes:
+      # Mount only the services folder into the container
+      - ./services:/srv/services
+    command: >
+      uvicorn services.audio_agent.audio_agent_fastapi:app
+      --host 0.0.0.0 --port 8000 --reload
+
+  mood_agent:
+    volumes:
+      - ./services:/srv/services
+    command: >
+      uvicorn services.mood_agent.mood_agent_fastapi:app
+      --host 0.0.0.0 --port 8001 --reload
+
+  app:
+    volumes:
+      # Mount whole repo so Streamlit sees code changes
+      - ./:/app
+    command: >
+      streamlit run app/moodmixr_app.py
+      --server.address=0.0.0.0
+      --server.port=8501
+      --server.fileWatcherType=poll
+      --server.runOnSave=true
