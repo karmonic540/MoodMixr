@@ -1,35 +1,35 @@
-# 🎧 MoodMixr
+# MoodMixr
 
 **MoodMixr** is an AI-powered DJ Insight Engine that helps DJs, producers, and playlist curators make smarter decisions with their music sets. Built with modular AI agents, it analyzes track audio, emotion, structure, and energy — and turns raw audio into set-ready insights.
 
-> 🔁 Think of it as your DJ Copilot — combining signal processing + large language models for live or studio workflows.
+> Think of it as your DJ Copilot — combining signal processing + large language models for live or studio workflows.
 
 ---
 
-## ✨ Features
+## Features
 
-- 🎙️ **VocalDetectorAgent**  
+- 🎙**VocalDetectorAgent**  
   Detects vocals using audio signal features (mel spectrogram, HPR, ZCR, flatness), returns `Yes/No` + confidence %
 
-- 🎯 **SetOptimizerAgent**  
+- **SetOptimizerAgent**  
   Classifies tracks into: Opener, Mid-Set, Peak, Closer  
   (based on BPM + Energy + Mood)
 
-- 🧠 **SummaryAgent**  
+- **SummaryAgent**  
   Generates a readable summary string (BPM, Key, Mood, Role, Vocals)
 
-- 📊 **TransitionRecommenderAgent** *(coming soon)*  
+- **TransitionRecommenderAgent** *(coming soon)*  
   Suggests the best mix transitions between tracks in a set
 
-- 📦 **ExportAgent**  
+- **ExportAgent**  
   Exports analysis as `.json` for integration into Rekordbox, Serato, etc.
 
-- 🧰 Modular Agent Architecture  
+- Modular Agent Architecture  
   Easy to plug in new agents for mood, genre, lyrics, ML models, etc.
 
 ---
 
-## 🚀 How It Works
+## How It Works
 
 1. Upload 1 or more tracks (WAV, MP3, FLAC)
 2. App analyzes each file using the agents
@@ -42,7 +42,7 @@
 
 ---
 
-## 📷 Screenshots
+## Screenshots
 <img width="1250" height="402" alt="image" src="https://github.com/user-attachments/assets/04b5f8e0-1698-4c82-8a31-09badc686c70" />
 <img width="1241" height="1103" alt="image" src="https://github.com/user-attachments/assets/2a0b9571-dfe6-4c54-ae26-676de07365f7" />
 <img width="811" height="550" alt="image" src="https://github.com/user-attachments/assets/74364933-e4bf-4671-bdd0-c17f569d72fc" />
@@ -52,7 +52,7 @@
 
 ---
 
-## 🛠 How to Run Locally
+## How to Run Locally
 
 ```bash
 git clone https://github.com/karmonic540/MoodMixr.git
