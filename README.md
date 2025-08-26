@@ -8,7 +8,7 @@
 
 ## Features
 
-- 🎙**VocalDetectorAgent**  
+- **VocalDetectorAgent**  
   Detects vocals using audio signal features (mel spectrogram, HPR, ZCR, flatness), returns `Yes/No` + confidence %
 
 - **SetOptimizerAgent**  
