@@ -43,10 +43,12 @@
 ---
 
 ## Screenshots
-<img width="1250" height="402" alt="image" src="https://github.com/user-attachments/assets/04b5f8e0-1698-4c82-8a31-09badc686c70" />
-<img width="1241" height="1103" alt="image" src="https://github.com/user-attachments/assets/2a0b9571-dfe6-4c54-ae26-676de07365f7" />
-<img width="811" height="550" alt="image" src="https://github.com/user-attachments/assets/74364933-e4bf-4671-bdd0-c17f569d72fc" />
-<img width="820" height="1028" alt="image" src="https://github.com/user-attachments/assets/9c1e848e-96cc-414b-b2cd-7efcba9d2606" />
+<img width="2560" height="2320" alt="MoodMixr-07-29-2025_12_12_PM" src="https://github.com/user-attachments/assets/25358d21-2379-4670-97a1-e1310ead4336" />
+<img width="1243" height="1911" alt="MoodMixr-07-31-2025_02_17_PM" src="https://github.com/user-attachments/assets/34440ea8-e9d3-478f-b4b7-d3a693a056ab" />
+<img width="2560" height="6134" alt="MoodMixr-07-30-2025_02_41_PM" src="https://github.com/user-attachments/assets/4fe2c748-2d7b-404f-9987-36caaedc228b" />
+<img width="1278" height="2329" alt="MoodMixr-07-30-2025_03_06_PM" src="https://github.com/user-attachments/assets/2be7233b-f90c-4060-a558-b298c36b4db0" />
+<img width="1278" height="8234" alt="MoodMixr-08-14-2025_07_21_PM" src="https://github.com/user-attachments/assets/3ffef885-b6d3-4085-b3cc-57c512da99de" />
+
 
 
 
