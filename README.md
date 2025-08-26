@@ -47,7 +47,7 @@
 <img width="1243" height="1911" alt="MoodMixr-07-31-2025_02_17_PM" src="https://github.com/user-attachments/assets/34440ea8-e9d3-478f-b4b7-d3a693a056ab" />
 <img width="2560" height="6134" alt="MoodMixr-07-30-2025_02_41_PM" src="https://github.com/user-attachments/assets/4fe2c748-2d7b-404f-9987-36caaedc228b" />
 <img width="1278" height="2329" alt="MoodMixr-07-30-2025_03_06_PM" src="https://github.com/user-attachments/assets/2be7233b-f90c-4060-a558-b298c36b4db0" />
-<img width="1278" height="8234" alt="MoodMixr-08-14-2025_07_21_PM" src="https://github.com/user-attachments/assets/3ffef885-b6d3-4085-b3cc-57c512da99de" />
+
 
 
 
